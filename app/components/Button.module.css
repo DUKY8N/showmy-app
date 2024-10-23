@@ -1,0 +1,49 @@
+.button {
+  --background-color: var(--aqua-color-600);
+  --hover-background-color: var(--aqua-color-700);
+  --active-background-color: var(--aqua-color-800);
+
+  background: var(--background-color);
+  color: white;
+  font-size: var(--font-size-md);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  box-shadow: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button:hover {
+    background: var(--hover-background-color);
+  }
+}
+
+.button:active {
+  background: var(--active-background-color);
+  transition: none;
+}
+
+/* 상태별 색상*/
+.button.success {
+  --background-color: var(--semantic-success-color);
+  --hover-background-color: var(--green-color-600);
+  --active-background-color: var(--green-color-800);
+}
+.button.info {
+  --background-color: var(--semantic-info-color);
+  --hover-background-color: var(--blue-color-600);
+  --active-background-color: var(--blue-color-800);
+}
+.button.warning {
+  --background-color: var(--semantic-warning-color);
+  --hover-background-color: var(--yellow-color-600);
+  --active-background-color: var(--yellow-color-800);
+}
+.button.important {
+  --background-color: var(--semantic-important-color);
+  --hover-background-color: var(--red-color-600);
+  --active-background-color: var(--red-color-800);
+}
