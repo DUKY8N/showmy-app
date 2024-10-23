@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import styles from './page.module.css';
 import Button from '@/components/Button';
+import Logo from './Logo';
 
 const Page = () => {
   return (
@@ -69,15 +70,6 @@ const Page = () => {
   );
 };
 
-const Logo = () => {
-  return (
-    <div className={styles.logo}>
-      <h1>Show My</h1>
-      <Image src="/logo.png" alt="logo icon" width={150} height={150} quality={100} />
-    </div>
-  );
-};
-
 type ArticleProps = {
   children: React.ReactNode;
   title: string;
@@ -95,7 +87,7 @@ const Footer = () => {
   return (
     <footer className={styles.footer}>
       <a href="https://github.com/DUKY8N/showmy-app" target="_blank" rel="noopener noreferrer">
-        <Image src="https://nextjs.org/icons/globe.svg" alt="Globe icon" width={16} height={16} />
+        <Image src="/github-aqua-800.svg" alt="Globe icon" width={18} height={18} />
         View on GitHub →
       </a>
     </footer>
