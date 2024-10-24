@@ -22,14 +22,14 @@ const Logo = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       // CSS 애니메이션 효과
-      if (imageRef.current) imageRef.current.style.transform = 'scale(0.8)';
       if (spanRef.current) spanRef.current.style.transform = 'translate(-50%, -10%)';
+      if (imageRef.current) imageRef.current.style.transform = 'scale(0.8)';
       if (spanRef.current) spanRef.current.style.opacity = '0';
 
       // 300ms 후 원래 상태로 되돌리기
       setTimeout(() => {
-        if (imageRef.current) imageRef.current.style.transform = 'scale(1)';
         if (spanRef.current) spanRef.current.style.transform = 'translate(-50%, -50%)';
+        if (imageRef.current) imageRef.current.style.transform = 'scale(1)';
 
         // 이미지 인덱스 증가
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (otherImages.length * 2));
@@ -49,7 +49,7 @@ const Logo = () => {
     currentImageIndex % 2 === 0 ? '/logo.png' : otherImages[Math.floor(currentImageIndex / 2)];
 
   const currentImageDescription =
-    currentImageIndex % 2 === 0 ? '' : otherImagesDescription[Math.floor(currentImageIndex / 2)];
+    currentImageIndex % 2 === 0 ? ' ' : otherImagesDescription[Math.floor(currentImageIndex / 2)];
 
   const imageStyle = currentImage === '/logo.png' ? { border: 'none' } : {};
 
