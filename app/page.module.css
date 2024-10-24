@@ -26,10 +26,27 @@
 .header .logo h1 {
   font-size: var(--font-size-5xl);
 }
-.header .logo img {
+.header .logo .logo-icon-wrapper {
+  position: relative;
+}
+.header .logo .logo-icon-wrapper img {
+  transition: transform 0.3s ease-in-out;
   border: 6px solid var(--aqua-color-600);
   border-radius: 50%;
   object-fit: cover;
+}
+.header .logo .logo-icon-wrapper span {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: absolute;
+  background: var(--aqua-color-600);
+  color: white;
+  border-radius: 8px;
+  padding: 4px 8px;
+  top: -30px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  opacity: 0;
 }
 
 .header p {
