@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import styles from './page.module.css';
 
-const Logo = () => {
+const LogoIcon = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const spanRef = useRef<HTMLSpanElement | null>(null);
@@ -54,22 +54,19 @@ const Logo = () => {
   const imageStyle = currentImage === '/logo.png' ? { border: 'none' } : {};
 
   return (
-    <div className={styles.logo}>
-      <h1>Show My</h1>
-      <div className={styles['logo-icon-wrapper']}>
-        <Image
-          ref={imageRef}
-          src={currentImage}
-          alt="logo icon"
-          width={150}
-          height={150}
-          quality={100}
-          style={imageStyle}
-        />
-        <span ref={spanRef}>{currentImageDescription}</span>
-      </div>
+    <div className={styles['logo-icon-wrapper']}>
+      <Image
+        ref={imageRef}
+        src={currentImage}
+        alt="logo icon"
+        width={150}
+        height={150}
+        quality={100}
+        style={imageStyle}
+      />
+      <span ref={spanRef}>{currentImageDescription}</span>
     </div>
   );
 };
 
-export default Logo;
+export default LogoIcon;

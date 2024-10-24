@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import styles from './page.module.css';
 import Button from '@/components/Button';
-import Logo from './Logo';
+import LogoIcon from './LogoIcon';
 
 const Page = () => {
   return (
@@ -80,6 +80,15 @@ const Article = ({ children, title }: ArticleProps) => {
       <h2>{title}</h2>
       {children}
     </article>
+  );
+};
+
+const Logo = () => {
+  return (
+    <div className={styles.logo}>
+      <h1>Show My</h1>
+      <LogoIcon />
+    </div>
   );
 };
 
