@@ -9,7 +9,7 @@ const Page = () => {
       <header className={styles.header}>
         <Logo />
         <p>다양한 사람들과 실시간 화상통화, 화면 공유, 채팅을 한 번에!</p>
-        <p>어디너사 나를 쉽고 빠르게 공유하는 방법</p>
+        <p>어디서나 나를 쉽고 빠르게 공유하는 방법</p>
         <div className={styles.buttons}>
           <Button>방 입장</Button>
           <Button href="#">방 생성</Button>
