@@ -3,7 +3,7 @@
   grid-template-rows: auto 1fr 20px;
   min-height: 100svh;
   padding: 128px 256px;
-  gap: 128px;
+  gap: calc(128px - 16px);
   font-size: var(--font-size-lg);
 }
 
@@ -28,6 +28,9 @@
 }
 .header .logo .logo-icon-wrapper {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .header .logo .logo-icon-wrapper img {
   transition: transform 0.3s ease-in-out;
@@ -36,6 +39,7 @@
   object-fit: cover;
 }
 .header .logo .logo-icon-wrapper span {
+  will-change: transform, opacity;
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   position: absolute;
   background: var(--aqua-color-600);
@@ -82,12 +86,14 @@
   justify-self: center;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-md);
+  font-weight: 500;
   max-width: 420px;
   word-break: keep-all;
 }
 .main .features-article h2 {
   font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-2xs);
   font-weight: bold;
 }
 
@@ -136,7 +142,7 @@
   .header .logo h1 {
     font-size: calc(var(--font-size-5xl) * 0.8);
   }
-  .header .logo img {
+  .header .logo .logo-icon-wrapper img {
     width: calc(150px * 0.8);
     height: calc(150px * 0.8);
     border: calc(6px * 0.8) solid var(--aqua-color-600);
@@ -159,10 +165,13 @@
   .header .logo h1 {
     font-size: calc(var(--font-size-5xl) * 0.4);
   }
-  .header .logo img {
+  .header .logo .logo-icon-wrapper img {
     width: calc(150px * 0.4);
     height: calc(150px * 0.4);
-    border: 3px solid var(--aqua-color-600);
+    border: 4.5px solid var(--aqua-color-600);
+  }
+  .header .logo .logo-icon-wrapper span {
+    top: -25px;
   }
 
   .header p {
@@ -173,10 +182,12 @@
 
   .main .features-article {
     grid-column: span 6;
+    gap: var(--spacing-sm);
   }
 
   .main .features-article h2 {
     font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-2xs);
     font-weight: bold;
   }
 
@@ -196,7 +207,16 @@
   } */
 }
 
-@media (max-width: 480px) {
+@media (max-width: 550px) {
+  .page {
+    padding: calc(128px - 16px) var(--spacing-lg) 128px var(--spacing-lg);
+    grid-template-rows: calc(100svh - (128px - 16px) * 2) 1fr 20px;
+  }
+
+  .header {
+    align-self: center;
+  }
+
   .header p {
     display: none;
   }
