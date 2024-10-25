@@ -1,0 +1,26 @@
+.input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-container > label {
+  color: var(--gray-color-600);
+  font-size: var(--font-size-sm);
+  margin-left: var(--spacing-2xs);
+  margin-bottom: var(--spacing-3xs);
+}
+
+.input-container > input {
+  border: 1px solid var(--gray-color-500);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  padding: calc(var(--spacing-md) - 0.75px) calc(var(--spacing-md) - 0.5px);
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+  outline: none;
+}
+
+.input-container > input::selection {
+  background: var(--gray-color-600);
+  color: white;
+}
