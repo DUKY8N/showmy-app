@@ -1,4 +1,4 @@
-import Button from '@/components/Button';
+import Image from 'next/image';
 import style from './Modal.module.css';
 
 type ModalProps = {
@@ -17,8 +17,10 @@ const Modal = ({ children, onClose }: ModalProps) => {
   return (
     <div className={style['modal-outside']} onClick={closeHandler}>
       <div className={style.modal}>
-        <Button onClick={closeHandler}>닫기</Button>
-        <div>{children}</div>
+        <button className={style['close-button']} onClick={closeHandler}>
+          <Image src="/close.svg" alt="Close" width={18} height={18} />
+        </button>
+        <div className={style.contents}>{children}</div>
       </div>
     </div>
   );
