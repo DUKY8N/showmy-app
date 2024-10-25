@@ -1,4 +1,3 @@
-'use client';
 import style from './Button.module.css';
 
 type ButtonProps = {
