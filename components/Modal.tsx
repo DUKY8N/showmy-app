@@ -6,10 +6,18 @@ type ModalProps = {
   onClose: () => void;
 };
 const Modal = ({ children, onClose }: ModalProps) => {
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+
+  const closeHandler = () => {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    onClose();
+  };
   return (
     <div className={style['modal-outside']}>
       <div className={style.modal}>
-        <Button onClick={onClose}>닫기</Button>
+        <Button onClick={closeHandler}>닫기</Button>
         <div>{children}</div>
       </div>
     </div>
