@@ -43,7 +43,7 @@
   animation: modal-fade-in 0.3s ease-in-out;
 }
 
-.modal button {
+.modal > button {
   position: absolute;
   right: 0;
   top: 0;
