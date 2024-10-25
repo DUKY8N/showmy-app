@@ -15,7 +15,7 @@ const Modal = ({ children, onClose }: ModalProps) => {
     onClose();
   };
   return (
-    <div className={style['modal-outside']}>
+    <div className={style['modal-outside']} onClick={closeHandler}>
       <div className={style.modal}>
         <Button onClick={closeHandler}>닫기</Button>
         <div>{children}</div>
