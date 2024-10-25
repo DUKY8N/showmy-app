@@ -14,9 +14,10 @@ const Modal = ({ children, onClose }: ModalProps) => {
     document.documentElement.style.overflow = '';
     onClose();
   };
+
   return (
     <div className={style['modal-outside']} onClick={closeHandler}>
-      <div className={style.modal}>
+      <div className={style.modal} onClick={(e) => e.stopPropagation()}>
         <button className={style['close-button']} onClick={closeHandler}>
           <Image src="/close.svg" alt="Close" width={18} height={18} />
         </button>

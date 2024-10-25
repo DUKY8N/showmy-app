@@ -18,6 +18,7 @@
   background-color: white;
   border-radius: var(--radius-md);
   padding: var(--spacing-3xl);
+  user-select: none;
 }
 
 .modal button {
@@ -33,7 +34,4 @@
   border: none;
   border-radius: 50%;
   background: var(--gray-color-100);
-}
-
-.modal .contents {
 }
