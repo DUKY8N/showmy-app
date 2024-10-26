@@ -40,7 +40,9 @@
 }
 .header .logo .logo-icon-wrapper span {
   will-change: transform, opacity;
-  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transition:
+    transform 0.3s ease-in-out,
+    opacity 0.3s ease-in-out;
   position: absolute;
   background: var(--aqua-color-600);
   color: white;
@@ -111,6 +113,24 @@
 }
 .footer img {
   flex-shrink: 0;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 50vw;
+  max-width: 500px;
+}
+.modal h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: bold;
+  margin-bottom: -14px;
+}
+.modal .input-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
 /* Enable hover only on non-touch devices */

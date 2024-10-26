@@ -4,8 +4,9 @@ import style from './Modal.module.css';
 type ModalProps = {
   children: React.ReactNode;
   onClose: () => void;
+  className?: string;
 };
-const Modal = ({ children, onClose }: ModalProps) => {
+const Modal = ({ children, onClose, className }: ModalProps) => {
   document.body.style.overflow = 'hidden';
   document.documentElement.style.overflow = 'hidden';
 
@@ -21,7 +22,7 @@ const Modal = ({ children, onClose }: ModalProps) => {
         <button className={style['close-button']} onClick={closeHandler}>
           <Image src="/close.svg" alt="Close" width={18} height={18} />
         </button>
-        <div className={style.contents}>{children}</div>
+        <div className={className}>{children}</div>
       </div>
     </div>
   );
