@@ -59,6 +59,10 @@
 }
 
 @media (max-width: 550px) {
+  .modal-outside {
+    background: unset;
+  }
+
   .modal {
     display: flex;
     padding: var(--spacing-3xl) var(--spacing-xl);
@@ -67,5 +71,6 @@
     border-radius: unset;
     justify-content: center;
     align-items: center;
+    animation: modal-outside-fade-in 0.3s ease-in-out;
   }
 }
