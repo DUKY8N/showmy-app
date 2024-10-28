@@ -1,0 +1,52 @@
+.pill-button {
+  --background-color: var(--gray-color-700);
+  --hover-background-color: var(--gray-color-600);
+  --active-background-color: var(--gray-color-800);
+
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2xs);
+  height: 51px;
+  padding: var(--spacing-md);
+  border: none;
+  border-radius: 99999px;
+  background: var(--background-color);
+  color: white;
+  font-size: var(--font-size-md);
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pill-button:hover {
+    background: var(--hover-background-color);
+  }
+}
+
+.pill-button.show-active:active {
+  background: var(--active-background-color);
+  transition: none;
+}
+
+/* 상태별 색상*/
+.pill-button.white {
+  --background-color: var(--gray-color-200);
+  --hover-background-color: var(--gray-color-100);
+  --active-background-color: var(--gray-color-300);
+  color: var(--gray-color-800);
+}
+
+.pill-button.red {
+  --background-color: var(--red-color-500);
+  --hover-background-color: var(--red-color-400);
+  --active-background-color: var(--red-color-600);
+}
+
+.pill-button.dark-aqua {
+  --background-color: var(--aqua-color-900);
+  --hover-background-color: var(--aqua-color-800);
+  --active-background-color: var(--aqua-color-900);
+  border: 2px solid var(--aqua-color-500);
+  color: var(--aqua-color-500);
+}
