@@ -9,7 +9,7 @@ import LogoIconButton from '@/components/LogoIconButton';
 import useMediaStore from '@/store/useMediaStore';
 
 const Page = () => {
-  const { resetAll } = useMediaStore();
+  const { resetAll, isChatOpen } = useMediaStore();
 
   useEffect(() => {
     resetAll();
@@ -17,20 +17,29 @@ const Page = () => {
 
   return (
     <div className={styles.page}>
-      <UserThumbnailVideosList>
-        <UserThumbnailVideos>
-          <ThumbnailVideo isFocus={true} />
-          <ThumbnailVideo isScreenSharing={true} />
-        </UserThumbnailVideos>
-        <UserThumbnailVideos>
-          <ThumbnailVideo />
-          <ThumbnailVideo isScreenSharing={true} />
-        </UserThumbnailVideos>
-      </UserThumbnailVideosList>
+      <div className={styles['app-container']}>
+        <UserThumbnailVideosList>
+          <UserThumbnailVideos>
+            <ThumbnailVideo isFocus={true} />
+            <ThumbnailVideo isScreenSharing={true} />
+          </UserThumbnailVideos>
+          <UserThumbnailVideos>
+            <ThumbnailVideo />
+            <ThumbnailVideo isScreenSharing={true} />
+          </UserThumbnailVideos>
+        </UserThumbnailVideosList>
 
-      <div className={styles['focus-video']} />
+        <div className={styles['focus-video']} />
 
-      <UserControlButtons />
+        <UserControlButtons />
+      </div>
+
+      <div
+        className={`
+          ${styles['chat-container']}
+          ${isChatOpen ? styles.show : ''}
+        `}
+      ></div>
     </div>
   );
 };
