@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
 import ThumbnailVideo from '@/components/ThumbnailVideo';
@@ -10,6 +11,10 @@ import useMediaStore from '@/store/useMediaStore';
 
 const Page = () => {
   const { resetAll, isChatOpen } = useMediaStore();
+  const searchParams = useSearchParams();
+
+  const key = searchParams.get('key');
+  const nickname = searchParams.get('nickname');
 
   useEffect(() => {
     resetAll();
@@ -39,7 +44,10 @@ const Page = () => {
           ${styles['chat-container']}
           ${isChatOpen ? styles.show : ''}
         `}
-      ></div>
+      >
+        key: {key}
+        nickname: {nickname}
+      </div>
     </div>
   );
 };

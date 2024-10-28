@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/Button';
 import Modal from '@/components/Modal';
@@ -48,15 +49,36 @@ const ModalController = ({
   isCreateRoomModalOpen,
   closeModal,
 }: ModalControllerProps) => {
+  const router = useRouter();
+  const keyInputRef = useRef<HTMLInputElement>(null);
+  const nicknameInputRef = useRef<HTMLInputElement>(null);
+
+  const handleJoinRoomClick = () => {
+    const key = keyInputRef.current?.value || '';
+    const nickname = nicknameInputRef.current?.value || '';
+    router.push(`/room?key=${key}&nickname=${nickname}`);
+  };
+
+  const handleCreateRoomClick = () => {
+    const key = keyInputRef.current?.value || '';
+    const nickname = nicknameInputRef.current?.value || '';
+    console.log('hihi');
+    router.push(`/room?key=${key}&nickname=${nickname}`);
+  };
+
   if (isJoinRoomModalOpen) {
     return (
       <Modal onClose={closeModal} className={styles.modal}>
         <h1>방 참여</h1>
         <div className={styles['input-container']}>
-          <Input label="방 Key" placeholder="https://showmy.live/room-key" />
-          <Input label="닉네임" placeholder="홍길동" />
+          <Input
+            label="방 Key"
+            placeholder="https://showmy.live/join-room?key="
+            ref={keyInputRef}
+          />
+          <Input label="닉네임" placeholder="홍길동" ref={nicknameInputRef} />
         </div>
-        <Button href="room">방 참여하기</Button>
+        <Button onClick={handleJoinRoomClick}>방 참여하기</Button>
       </Modal>
     );
   }
@@ -66,9 +88,9 @@ const ModalController = ({
       <Modal onClose={closeModal} className={styles.modal}>
         <h1>방 생성</h1>
         <div className={styles['input-container']}>
-          <Input label="닉네임" placeholder="홍길동" />
+          <Input label="닉네임" placeholder="홍길동" ref={nicknameInputRef} />
         </div>
-        <Button href="room">방 생성하기</Button>
+        <Button onClick={handleCreateRoomClick}>방 참여하기</Button>
       </Modal>
     );
   }
