@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import style from './Button.module.css';
 
 type ButtonProps = {
@@ -10,9 +11,9 @@ type ButtonProps = {
 const Button = ({ children, color = 'primary', href, onClick }: ButtonProps) => {
   if (href) {
     return (
-      <a className={`${style.button} ${style[color]}`} href={href} onClick={onClick}>
+      <Link className={`${style.button} ${style[color]}`} href={href} onClick={onClick}>
         {children}
-      </a>
+      </Link>
     );
   }
 

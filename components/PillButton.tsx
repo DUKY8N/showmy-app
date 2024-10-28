@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import styles from './PillButton.module.css';
 
@@ -34,7 +35,7 @@ const PillButton = ({
 
   if (href) {
     return (
-      <a
+      <Link
         className={`
           ${styles['pill-button']}
           ${styles[color]}
@@ -45,7 +46,7 @@ const PillButton = ({
       >
         {icon ? <Image src={iconSrc} alt="icon" width={19} height={19} /> : null}
         {children}
-      </a>
+      </Link>
     );
   }
 
