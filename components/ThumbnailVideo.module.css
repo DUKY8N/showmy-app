@@ -1,0 +1,39 @@
+.thumbnail-video {
+  position: relative;
+  display: flex;
+  width: fit-content;
+  height: fit-content;
+  padding: 5px;
+  border: 3px solid transparent;
+  border-radius: var(--radius-md);
+  user-select: none;
+}
+.thumbnail-video.focus {
+  border: 3px solid var(--semantic-primary-color);
+}
+
+.thumbnail-video video {
+  width: 224px;
+  height: 135px;
+  background: gray;
+  border-radius: var(--radius-xs);
+}
+.thumbnail-video.screen-sharing video {
+  width: 182.52px;
+  height: 110px;
+}
+
+.thumbnail-video .nickname {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin: 10px;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2xs);
+  font-size: var(--font-size-xs);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: var(--radius-xs);
+}
