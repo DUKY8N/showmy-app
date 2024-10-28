@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import styles from './page.module.css';
 import ThumbnailVideo from '@/components/ThumbnailVideo';
@@ -21,27 +23,7 @@ const page = () => {
 
       <div className={styles['focus-video']} />
 
-      <div className={styles['user-control-buttons']}>
-        <div className={styles['left-buttons']}>
-          <LogoIconButton tooltip="나가기" />
-          <PillButton icon="link" color="dark-aqua" showActive={true}>
-            초대 링크 복사하기
-          </PillButton>
-        </div>
-
-        <div className={styles['middle-buttons']}>
-          <PillButton icon="person" color="dark" showActive={false}>
-            웹캠 공유
-          </PillButton>
-          <PillButton icon="screen-share" color="dark" showActive={false}>
-            화면 공유
-          </PillButton>
-          <PillButton icon="mic" color="dark" showActive={false}>
-            음소거
-          </PillButton>
-          <PillButton icon="chat" />
-        </div>
-      </div>
+      <UserControlButtons />
     </div>
   );
 };
@@ -64,6 +46,70 @@ type UserThumbnailVideosProps = {
 };
 const UserThumbnailVideos = ({ children }: UserThumbnailVideosProps) => {
   return <div className={styles['user-thumbnail-videos']}>{children}</div>;
+};
+
+const UserControlButtons = () => {
+  const [isWebcamOn, setIsWebcamOn] = useState(false);
+  const [isScreenSharingOn, setIsScreenSharingOn] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const toggleWebcamHandler = () => {
+    setIsWebcamOn((prev) => !prev);
+  };
+  const toggleScreenShareHandler = () => {
+    setIsScreenSharingOn((prev) => !prev);
+  };
+  const toggleMuteHandler = () => {
+    setIsMicOn((prev) => !prev);
+  };
+  const toggleChatHandler = () => {
+    setIsChatOpen((prev) => !prev);
+  };
+
+  return (
+    <div className={styles['user-control-buttons']}>
+      <div className={styles['left-buttons']}>
+        <LogoIconButton tooltip="나가기" />
+        <PillButton icon="link" color="dark-aqua" showActive={true}>
+          초대 링크 복사하기
+        </PillButton>
+      </div>
+
+      <div className={styles['middle-buttons']}>
+        <PillButton
+          icon={isWebcamOn ? 'person' : 'person-off'}
+          color={isWebcamOn ? 'red' : 'dark'}
+          showActive={false}
+          onClick={toggleWebcamHandler}
+        >
+          웹캠 공유
+        </PillButton>
+        <PillButton
+          icon={isScreenSharingOn ? 'screen-share' : 'screen-share-off'}
+          color={isScreenSharingOn ? 'red' : 'dark'}
+          showActive={false}
+          onClick={toggleScreenShareHandler}
+        >
+          화면 공유
+        </PillButton>
+        <PillButton
+          icon={isMicOn ? 'mic' : 'mic-off'}
+          color={isMicOn ? 'red' : 'dark'}
+          showActive={false}
+          onClick={toggleMuteHandler}
+        >
+          음소거
+        </PillButton>
+        <PillButton
+          icon="chat"
+          color={isChatOpen ? 'white' : 'dark'}
+          showActive={false}
+          onClick={toggleChatHandler}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default page;
