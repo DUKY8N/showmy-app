@@ -56,7 +56,7 @@ const ModalController = ({
           <Input label="방 Key" placeholder="https://showmy.live/room-key" />
           <Input label="닉네임" placeholder="홍길동" />
         </div>
-        <Button>방 참여하기</Button>
+        <Button href="room">방 참여하기</Button>
       </Modal>
     );
   }
@@ -68,7 +68,7 @@ const ModalController = ({
         <div className={styles['input-container']}>
           <Input label="닉네임" placeholder="홍길동" />
         </div>
-        <Button>방 생성하기</Button>
+        <Button href="room">방 생성하기</Button>
       </Modal>
     );
   }

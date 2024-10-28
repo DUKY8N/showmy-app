@@ -92,7 +92,7 @@ const UserControlButtons = () => {
   return (
     <div className={styles['user-control-buttons']}>
       <div className={styles['left-buttons']}>
-        <LogoIconButton tooltip="나가기" />
+        <LogoIconButton href="/" tooltip="나가기" />
         <PillButton icon="link" color="dark-aqua" showActive={true}>
           초대 링크 복사하기
         </PillButton>
