@@ -1,0 +1,35 @@
+.logo-icon-button {
+  position: relative;
+  display: flex;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.logo-icon-button span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  padding: var(--spacing-2xs);
+  border-radius: var(--radius-xs);
+  background: var(--gray-color-800);
+  color: white;
+  font-size: var(--font-size-sm);
+  text-align: center;
+  white-space: nowrap;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  transform: translate(-50%, -27px);
+  opacity: 0;
+}
+.logo-icon-button:hover span {
+  opacity: 1;
+  transform: translate(-50%, -32px);
+}
+.logo-icon-button img {
+  border-radius: 50%;
+  transition: box-shadow 0.3s ease;
+}
+.logo-icon-button:hover img {
+  box-shadow: 0 0 18px var(--semantic-primary-color);
+}
