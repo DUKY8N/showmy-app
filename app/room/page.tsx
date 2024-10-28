@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import styles from './page.module.css';
 import ThumbnailVideo from '@/components/ThumbnailVideo';
 import PillButton from '@/components/PillButton';
 import LogoIconButton from '@/components/LogoIconButton';
+import useMediaStore from '@/store/useMediaStore';
 
-const page = () => {
+const Page = () => {
+  const { resetAll } = useMediaStore();
+
+  useEffect(() => {
+    resetAll();
+  }, [resetAll]);
+
   return (
     <div className={styles.page}>
       <UserThumbnailVideosList>
@@ -49,22 +56,28 @@ const UserThumbnailVideos = ({ children }: UserThumbnailVideosProps) => {
 };
 
 const UserControlButtons = () => {
-  const [isWebcamOn, setIsWebcamOn] = useState(false);
-  const [isScreenSharingOn, setIsScreenSharingOn] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const {
+    isWebcamOn,
+    isScreenSharingOn,
+    isMicOn,
+    isChatOpen,
+    toggleWebcam,
+    toggleScreenSharing,
+    toggleMic,
+    toggleChat,
+  } = useMediaStore();
 
   const toggleWebcamHandler = () => {
-    setIsWebcamOn((prev) => !prev);
+    toggleWebcam();
   };
   const toggleScreenShareHandler = () => {
-    setIsScreenSharingOn((prev) => !prev);
+    toggleScreenSharing();
   };
   const toggleMuteHandler = () => {
-    setIsMicOn((prev) => !prev);
+    toggleMic();
   };
   const toggleChatHandler = () => {
-    setIsChatOpen((prev) => !prev);
+    toggleChat();
   };
 
   return (
@@ -112,4 +125,4 @@ const UserControlButtons = () => {
   );
 };
 
-export default page;
+export default Page;
