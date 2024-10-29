@@ -43,14 +43,6 @@ const useSocketStore = create<SocketState>((set, get) => ({
       set({ socket });
     });
 
-    socket.on('room:joined', (roomKey: string) => {
-      set({ roomKey });
-    });
-
-    socket.on('room:notFound', () => {
-      alert('방을 찾을 수 없습니다.');
-    });
-
     socket.on('room:existingParticipants', (participants: Participant[]) => {
       get().setParticipants(participants);
     });

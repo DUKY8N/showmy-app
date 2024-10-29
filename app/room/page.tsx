@@ -8,9 +8,11 @@ import ThumbnailVideo from '@/components/ThumbnailVideo';
 import PillButton from '@/components/PillButton';
 import LogoIconButton from '@/components/LogoIconButton';
 import useMediaStore from '@/store/useMediaStore';
+import useSocketStore from '@/store/useSocketStore';
 
 const Page = () => {
   const { resetAll, isChatOpen } = useMediaStore();
+  const { roomKey, socket, participants } = useSocketStore();
   const searchParams = useSearchParams();
 
   const key = searchParams.get('key');
@@ -45,8 +47,16 @@ const Page = () => {
           ${isChatOpen ? styles.show : ''}
         `}
       >
-        key: {key}
-        nickname: {nickname}
+        <p>key: {key}</p>
+        <hr />
+        <p>nickname: {nickname}</p>
+        <hr />
+        <p>socket: {String(socket)}</p>
+        <hr />
+        <p>roomKey: {roomKey}</p>
+        <hr />
+        <p>participants: {participants.toString()}</p>
+        <hr />
       </div>
     </div>
   );

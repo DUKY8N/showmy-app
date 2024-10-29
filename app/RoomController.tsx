@@ -60,8 +60,22 @@ const ModalController = ({
   const handleJoinRoomClick = async () => {
     const key = keyInputRef.current?.value || '';
     const nickname = nicknameInputRef.current?.value || '';
-    joinRoom(key, nickname);
-    router.push(`/room?key=${key}&nickname=${nickname}`);
+
+    const socket = useSocketStore.getState().socket;
+
+    if (socket) {
+      joinRoom(key, nickname);
+
+      socket.once('room:joined', (roomKey: string) => {
+        router.push(`/room?key=${roomKey}&nickname=${nickname}`);
+        socket.off('room:notFound');
+      });
+
+      socket.once('room:notFound', () => {
+        alert('방을 찾을 수 없습니다.');
+        socket.off('room:joined');
+      });
+    }
   };
 
   const handleCreateRoomClick = async () => {
