@@ -6,6 +6,7 @@ import styles from './page.module.css';
 import Button from '@/components/Button';
 import Modal from '@/components/Modal';
 import Input from '@/components/Input';
+import useSocketStore from '@/store/useSocketStore';
 
 const RoomController = () => {
   const [isJoinRoomModalOpen, setIsJoinRoomModalOpen] = useState<boolean>(false);
@@ -49,20 +50,23 @@ const ModalController = ({
   isCreateRoomModalOpen,
   closeModal,
 }: ModalControllerProps) => {
+  const { socket, initSocket, createRoom, joinRoom } = useSocketStore();
   const router = useRouter();
   const keyInputRef = useRef<HTMLInputElement>(null);
   const nicknameInputRef = useRef<HTMLInputElement>(null);
 
-  const handleJoinRoomClick = () => {
+  if (!socket) initSocket();
+
+  const handleJoinRoomClick = async () => {
     const key = keyInputRef.current?.value || '';
     const nickname = nicknameInputRef.current?.value || '';
+    joinRoom(key, nickname);
     router.push(`/room?key=${key}&nickname=${nickname}`);
   };
 
-  const handleCreateRoomClick = () => {
-    const key = keyInputRef.current?.value || '';
+  const handleCreateRoomClick = async () => {
     const nickname = nicknameInputRef.current?.value || '';
-    console.log('hihi');
+    const key = await createRoom(nickname);
     router.push(`/room?key=${key}&nickname=${nickname}`);
   };
 
@@ -90,7 +94,7 @@ const ModalController = ({
         <div className={styles['input-container']}>
           <Input label="닉네임" placeholder="홍길동" ref={nicknameInputRef} />
         </div>
-        <Button onClick={handleCreateRoomClick}>방 참여하기</Button>
+        <Button onClick={handleCreateRoomClick}>방 생성하기</Button>
       </Modal>
     );
   }
