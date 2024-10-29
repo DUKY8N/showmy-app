@@ -93,6 +93,7 @@ const UserControlButtons = () => {
     toggleMic,
     toggleChat,
   } = useMediaStore();
+  const { roomKey } = useSocketStore();
 
   const toggleWebcamHandler = () => {
     toggleWebcam();
@@ -107,11 +108,20 @@ const UserControlButtons = () => {
     toggleChat();
   };
 
+  const copyRoomKeyToClipboard = async () => {
+    await navigator.clipboard.writeText(roomKey ?? '');
+  };
+
   return (
     <div className={styles['user-control-buttons']}>
       <div className={styles['left-buttons']}>
         <LogoIconButton href="/" tooltip="나가기" />
-        <PillButton icon="link" color="dark-aqua" showActive={true}>
+        <PillButton
+          icon="link"
+          color="dark-aqua"
+          showActive={true}
+          onClick={copyRoomKeyToClipboard}
+        >
           초대 링크 복사하기
         </PillButton>
       </div>
