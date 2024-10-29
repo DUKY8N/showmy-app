@@ -23,6 +23,7 @@ interface SocketState {
   sendOffer: (data: SignalData) => void;
   sendAnswer: (data: SignalData) => void;
   sendIceCandidate: (data: SignalData) => void;
+  disconnectSocket: () => void;
   setParticipants: (participants: Participant[]) => void;
   addParticipant: (participant: Participant) => void;
   removeParticipant: (socketId: string) => void;
@@ -75,6 +76,12 @@ const useSocketStore = create<SocketState>((set, get) => ({
   sendIceCandidate: (data: SignalData) => {
     get().socket?.emit('signal:iceCandidate', get().roomKey, data);
   },
+  disconnectSocket: () => {
+    const socket = get().socket;
+    socket?.disconnect();
+    set({ socket: null, roomKey: null, participants: [] });
+  },
+
   setParticipants: (participants: Participant[]) => {
     set({ participants });
   },

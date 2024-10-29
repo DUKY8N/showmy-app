@@ -93,7 +93,7 @@ const UserControlButtons = () => {
     toggleMic,
     toggleChat,
   } = useMediaStore();
-  const { roomKey } = useSocketStore();
+  const { roomKey, disconnectSocket } = useSocketStore();
 
   const toggleWebcamHandler = () => {
     toggleWebcam();
@@ -115,7 +115,7 @@ const UserControlButtons = () => {
   return (
     <div className={styles['user-control-buttons']}>
       <div className={styles['left-buttons']}>
-        <LogoIconButton href="/" tooltip="나가기" />
+        <LogoIconButton href="/" tooltip="나가기" onClick={disconnectSocket} />
         <PillButton
           icon="link"
           color="dark-aqua"
