@@ -10,7 +10,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ label, placeholder }, 
   return (
     <div className={style['input-container']}>
       {label ? <label htmlFor="nickname">{label}</label> : null}
-      <input id="nickname" type="text" placeholder={placeholder} ref={ref} />
+      <input id="nickname" type="text" placeholder={placeholder} ref={ref} autoComplete="off" />
     </div>
   );
 });
