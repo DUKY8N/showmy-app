@@ -1,26 +1,20 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
 import ThumbnailVideo from '@/components/ThumbnailVideo';
 import PillButton from '@/components/PillButton';
 import LogoIconButton from '@/components/LogoIconButton';
-import useMediaStore from '@/store/useMediaStore';
-import useSocketStore from '@/store/useSocketStore';
+import useSocketStore from '@/store/useCommunicationStore';
 
 const Page = () => {
-  const { resetAll, isChatOpen } = useMediaStore();
-  const { roomKey, socket, participants } = useSocketStore();
+  const { roomKey, socket, participants, isChatOpen } = useSocketStore();
   const searchParams = useSearchParams();
 
   const key = searchParams.get('key');
   const nickname = searchParams.get('nickname');
-
-  useEffect(() => {
-    resetAll();
-  }, [resetAll]);
 
   return (
     <div className={styles.page}>
@@ -84,25 +78,26 @@ const UserThumbnailVideos = ({ children }: UserThumbnailVideosProps) => {
 
 const UserControlButtons = () => {
   const {
-    isWebcamOn,
-    isScreenSharingOn,
-    isMicOn,
+    roomKey,
+    isWebcamSharing,
+    isScreenSharing,
+    isMicrophoneOn,
     isChatOpen,
-    toggleWebcam,
-    toggleScreenSharing,
-    toggleMic,
+    toggleWebcamShare,
+    toggleScreenShare,
+    toggleMicrophone,
     toggleChat,
-  } = useMediaStore();
-  const { roomKey, disconnectSocket } = useSocketStore();
+    leaveRoom,
+  } = useSocketStore();
 
-  const toggleWebcamHandler = () => {
-    toggleWebcam();
+  const toggleWebcamHandler = async () => {
+    await toggleWebcamShare();
   };
-  const toggleScreenShareHandler = () => {
-    toggleScreenSharing();
+  const toggleScreenShareHandler = async () => {
+    await toggleScreenShare();
   };
-  const toggleMuteHandler = () => {
-    toggleMic();
+  const toggleMuteHandler = async () => {
+    await toggleMicrophone();
   };
   const toggleChatHandler = () => {
     toggleChat();
@@ -115,7 +110,7 @@ const UserControlButtons = () => {
   return (
     <div className={styles['user-control-buttons']}>
       <div className={styles['left-buttons']}>
-        <LogoIconButton href="/" tooltip="나가기" onClick={disconnectSocket} />
+        <LogoIconButton href="/" tooltip="나가기" onClick={leaveRoom} />
         <PillButton
           icon="link"
           color="dark-aqua"
@@ -128,24 +123,24 @@ const UserControlButtons = () => {
 
       <div className={styles['middle-buttons']}>
         <PillButton
-          icon={isWebcamOn ? 'person' : 'person-off'}
-          color={isWebcamOn ? 'red' : 'dark'}
+          icon={isWebcamSharing ? 'person' : 'person-off'}
+          color={isWebcamSharing ? 'red' : 'dark'}
           showActive={false}
           onClick={toggleWebcamHandler}
         >
           웹캠 공유
         </PillButton>
         <PillButton
-          icon={isScreenSharingOn ? 'screen-share' : 'screen-share-off'}
-          color={isScreenSharingOn ? 'red' : 'dark'}
+          icon={isScreenSharing ? 'screen-share' : 'screen-share-off'}
+          color={isScreenSharing ? 'red' : 'dark'}
           showActive={false}
           onClick={toggleScreenShareHandler}
         >
           화면 공유
         </PillButton>
         <PillButton
-          icon={isMicOn ? 'mic' : 'mic-off'}
-          color={isMicOn ? 'red' : 'dark'}
+          icon={isMicrophoneOn ? 'mic' : 'mic-off'}
+          color={isMicrophoneOn ? 'red' : 'dark'}
           showActive={false}
           onClick={toggleMuteHandler}
         >

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/Button';
 import Modal from '@/components/Modal';
 import Input from '@/components/Input';
-import useSocketStore from '@/store/useSocketStore';
+import useCommunicationStore from '@/store/useCommunicationStore';
 
 const RoomController = () => {
   const [isJoinRoomModalOpen, setIsJoinRoomModalOpen] = useState<boolean>(false);
@@ -50,31 +50,25 @@ const ModalController = ({
   isCreateRoomModalOpen,
   closeModal,
 }: ModalControllerProps) => {
-  const { socket, initSocket, createRoom, joinRoom } = useSocketStore();
+  const { initialize, createRoom, joinRoom } = useCommunicationStore();
   const router = useRouter();
   const keyInputRef = useRef<HTMLInputElement>(null);
   const nicknameInputRef = useRef<HTMLInputElement>(null);
 
-  if (!socket) initSocket();
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
 
   const handleJoinRoomClick = async () => {
     const key = keyInputRef.current?.value || '';
     const nickname = nicknameInputRef.current?.value || '';
 
-    const socket = useSocketStore.getState().socket;
-
-    if (socket) {
-      joinRoom(key, nickname);
-
-      socket.once('room:joined', (roomKey: string) => {
-        router.push(`/room?key=${roomKey}&nickname=${nickname}`);
-        socket.off('room:notFound');
-      });
-
-      socket.once('room:notFound', () => {
-        alert('방을 찾을 수 없습니다.');
-        socket.off('room:joined');
-      });
+    try {
+      await joinRoom(key, nickname);
+      router.push(`/room?key=${key}&nickname=${nickname}`);
+    } catch (error) {
+      alert('방을 찾을 수 없습니다.');
+      console.log(error);
     }
   };
 
