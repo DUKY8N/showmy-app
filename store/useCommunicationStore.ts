@@ -144,6 +144,11 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     });
 
     socket.on('room:existingParticipants', async (participants: Participant[]) => {
+      // 기존 참가자들을 상태에 추가
+      set((state) => ({
+        participants: [...state.participants, ...participants],
+      }));
+
       // 기존 참가자들과의 연결 설정
       for (const participant of participants) {
         await initiateCall(participant.socketId);

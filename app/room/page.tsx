@@ -49,7 +49,7 @@ const Page = () => {
         <hr />
         <p>roomKey: {roomKey}</p>
         <hr />
-        <p>participants: {participants.toString()}</p>
+        <p>participants: {participants.map((p) => p.userName).join(' ')}</p>
         <hr />
       </div>
     </div>
