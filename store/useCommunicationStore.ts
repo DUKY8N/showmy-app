@@ -54,17 +54,13 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
   // 내부 함수: 피어 연결 생성
   const createPeerConnection = (socketId: string): PeerConnectionState => {
     let peerConnectionState = peerConnections[socketId];
-    if (peerConnectionState) {
-      return peerConnectionState;
-    }
+    if (peerConnectionState) return peerConnectionState;
 
     const pc = new RTCPeerConnection();
 
-    // 현재 피어의 polite 여부 결정 (예: socketId를 비교하여 결정)
+    // 현재 피어의 polite 여부 결정
     const localSocketId = get().socket?.id;
-    if (!localSocketId) {
-      throw new Error('Socket is not initialized');
-    }
+    if (!localSocketId) throw new Error('Socket is not initialized');
     const polite = localSocketId < socketId;
 
     peerConnectionState = {
@@ -76,37 +72,49 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     // ICE 후보 처리
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        const socket = get().socket;
-        const roomKey = get().roomKey;
-        if (socket && roomKey) {
-          socket.emit('signal:iceCandidate', roomKey, {
-            content: event.candidate,
-            to: socketId,
-          });
-        }
-      }
+      const { socket, roomKey } = get();
+
+      if (!event.candidate || !socket || !roomKey) return;
+
+      socket.emit('signal:iceCandidate', roomKey, {
+        content: event.candidate,
+        to: socketId,
+      });
     };
 
     // 원격 스트림 수신
     pc.ontrack = (event) => {
       set((state) => {
-        const participant = state.participants.find((p) => p.socketId === socketId);
-        if (participant) {
-          // 기존 스트림에 추가하거나 새로운 스트림으로 추가
-          const streams = participant.streams;
-          if (!streams.includes(event.streams[0])) {
-            participant.streams = [...streams, event.streams[0]];
-          }
-        } else {
-          // 참가자가 없으면 새로운 참가자로 추가
-          state.participants.push({
-            socketId,
-            userName: '', // 필요 시 서버에서 사용자 이름을 받아와 설정
-            streams: [event.streams[0]],
-          });
+        const participantIndex = state.participants.findIndex((p) => p.socketId === socketId);
+        const newStream = event.streams[0];
+
+        if (participantIndex === -1) {
+          // 참가자가 없으면 새로 추가
+          return {
+            participants: [
+              ...state.participants,
+              {
+                socketId,
+                userName: '', // 필요 시 서버에서 사용자 이름을 받아와 설정
+                streams: [newStream],
+              },
+            ],
+          };
         }
-        return { participants: state.participants };
+
+        const participant = state.participants[participantIndex];
+        const streams = participant.streams || [];
+
+        if (streams.includes(newStream)) return {};
+
+        // 기존 참가자의 스트림을 업데이트
+        const updatedParticipants = [...state.participants];
+        updatedParticipants[participantIndex] = {
+          ...participant,
+          streams: [...streams, newStream],
+        };
+
+        return { participants: updatedParticipants };
       });
     };
 
@@ -117,13 +125,11 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     // 로컬 스트림 추가
     const localStreams = get().localStreams;
-    if (localStreams.length > 0) {
-      localStreams.forEach((stream) => {
-        stream.getTracks().forEach((track) => {
-          pc.addTrack(track, stream);
-        });
+    localStreams.forEach((stream) => {
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
       });
-    }
+    });
 
     peerConnections[socketId] = peerConnectionState;
     return peerConnectionState;
@@ -167,6 +173,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
       set((state) => ({
         participants: state.participants.filter((p) => p.socketId !== socketId),
       }));
+
       // 피어 연결 해제
       const peerConnectionState = peerConnections[socketId];
       if (peerConnectionState) {
@@ -192,19 +199,17 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
   // 시그널링 처리 함수들
   const handleOffer = async (data: SignalData<RTCSessionDescriptionInit>) => {
     const { senderSocketId, content } = data;
-    const state = createPeerConnection(senderSocketId);
-    const pc = state.pc;
-    const polite = state.polite;
+    const { pc, polite, makingOffer } = createPeerConnection(senderSocketId);
 
-    const offerCollision = pc.signalingState !== 'stable' || state.makingOffer;
+    const offerCollision = pc.signalingState !== 'stable' || makingOffer;
 
-    if (offerCollision) {
-      if (!polite) {
-        console.log('오퍼 충돌 발생: impolite 피어는 오퍼를 무시합니다.');
-        return;
-      } else {
-        console.log('오퍼 충돌 발생: polite 피어는 오퍼를 처리합니다.');
-      }
+    if (offerCollision && !polite) {
+      console.log('오퍼 충돌 발생: impolite 피어는 오퍼를 무시합니다.');
+      return;
+    }
+
+    if (offerCollision && polite) {
+      console.log('오퍼 충돌 발생: polite 피어는 오퍼를 처리합니다.');
     }
 
     try {
@@ -212,8 +217,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      const socket = get().socket;
-      const roomKey = get().roomKey;
+      const { socket, roomKey } = get();
       if (socket && roomKey) {
         socket.emit('signal:answer', roomKey, {
           content: pc.localDescription,
@@ -227,27 +231,27 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
   const handleAnswer = async (data: SignalData<RTCSessionDescriptionInit>) => {
     const { senderSocketId, content } = data;
-    const state = peerConnections[senderSocketId];
-    const pc = state?.pc;
-    if (pc) {
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(content));
-      } catch (err) {
-        console.error('Answer 처리 중 오류 발생:', err);
-      }
+    const pc = peerConnections[senderSocketId]?.pc;
+
+    if (!pc) return;
+
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(content));
+    } catch (err) {
+      console.error('Answer 처리 중 오류 발생:', err);
     }
   };
 
   const handleIceCandidate = async (data: SignalData<RTCIceCandidateInit>) => {
     const { senderSocketId, content } = data;
-    const state = peerConnections[senderSocketId];
-    const pc = state?.pc;
-    if (pc) {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(content));
-      } catch (err) {
-        console.error('ICE 후보 처리 중 오류 발생:', err);
-      }
+    const pc = peerConnections[senderSocketId]?.pc;
+
+    if (!pc) return;
+
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(content));
+    } catch (err) {
+      console.error('ICE 후보 처리 중 오류 발생:', err);
     }
   };
 
@@ -256,19 +260,18 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     const state = createPeerConnection(socketId);
     const pc = state.pc;
 
+    const { socket, roomKey } = get();
+    if (!socket || !roomKey) return;
+
     try {
       state.makingOffer = true;
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const socket = get().socket;
-      const roomKey = get().roomKey;
-      if (socket && roomKey) {
-        socket.emit('signal:offer', roomKey, {
-          content: pc.localDescription,
-          to: socketId,
-        });
-      }
+      socket.emit('signal:offer', roomKey, {
+        content: pc.localDescription,
+        to: socketId,
+      });
     } catch (err) {
       console.error('통화 시작 중 오류 발생:', err);
     } finally {

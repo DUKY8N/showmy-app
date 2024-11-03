@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -8,26 +8,62 @@ import ThumbnailVideo from '@/components/ThumbnailVideo';
 import PillButton from '@/components/PillButton';
 import LogoIconButton from '@/components/LogoIconButton';
 import useSocketStore from '@/store/useCommunicationStore';
+import useVideoStreams from '@/hooks/useVideoStreams';
 
 const Page = () => {
-  const { roomKey, socket, participants, isChatOpen } = useSocketStore();
+  const { roomKey, socket, participants = [], isChatOpen } = useSocketStore(); // 기본값 빈 배열 설정
   const searchParams = useSearchParams();
 
   const key = searchParams.get('key');
   const nickname = searchParams.get('nickname');
+
+  // 로컬 웹캠 및 화면 공유용 레퍼런스
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const screenShareVideoRef = useRef<HTMLVideoElement>(null);
+
+  // 각 참가자의 비디오 레퍼런스를 생성
+  const participantVideoRefs = useMemo(() => {
+    const refsMap = new Map();
+    participants.forEach((participant) => {
+      refsMap.set(participant.socketId, {
+        webcam: React.createRef<HTMLVideoElement>(),
+        screenShare: React.createRef<HTMLVideoElement>(),
+      });
+    });
+    return refsMap;
+  }, [participants]);
+
+  // useVideoStreams 훅을 통해 로컬 및 참가자 비디오 설정
+  useVideoStreams({
+    localVideoRef,
+    screenShareVideoRef,
+    participantVideoRefs,
+  });
 
   return (
     <div className={styles.page}>
       <div className={styles['app-container']}>
         <UserThumbnailVideosList>
           <UserThumbnailVideos>
-            <ThumbnailVideo isFocus={true} />
-            <ThumbnailVideo isScreenSharing={true} />
+            <ThumbnailVideo ref={localVideoRef} isFocus={true} autoPlay playsInline /> {/* 웹캠 */}
+            <ThumbnailVideo ref={screenShareVideoRef} isScreenSharing={true} autoPlay playsInline />
+            {/* 화면 공유 */}
           </UserThumbnailVideos>
-          <UserThumbnailVideos>
-            <ThumbnailVideo />
-            <ThumbnailVideo isScreenSharing={true} />
-          </UserThumbnailVideos>
+          {participants.map((participant) => (
+            <UserThumbnailVideos key={participant.socketId}>
+              <ThumbnailVideo
+                ref={participantVideoRefs.get(participant.socketId)?.webcam}
+                autoPlay
+                playsInline
+              />
+              <ThumbnailVideo
+                ref={participantVideoRefs.get(participant.socketId)?.screenShare}
+                isScreenSharing={true}
+                autoPlay
+                playsInline
+              />
+            </UserThumbnailVideos>
+          ))}
         </UserThumbnailVideosList>
 
         <div className={styles['focus-video']} />
