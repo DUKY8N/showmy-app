@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -10,8 +10,8 @@ import LogoIconButton from '@/components/LogoIconButton';
 import useSocketStore from '@/store/useCommunicationStore';
 import useVideoStreams from '@/hooks/useVideoStreams';
 
-const Page = () => {
-  const { roomKey, socket, participants = [], isChatOpen } = useSocketStore(); // 기본값 빈 배열 설정
+const PageContent = () => {
+  const { roomKey, socket, participants = [], isChatOpen } = useSocketStore();
   const searchParams = useSearchParams();
 
   const key = searchParams.get('key');
@@ -89,6 +89,14 @@ const Page = () => {
         <hr />
       </div>
     </div>
+  );
+};
+
+const Page = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PageContent />
+    </Suspense>
   );
 };
 

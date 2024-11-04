@@ -17,7 +17,7 @@ const ThumbnailVideo = React.forwardRef<HTMLVideoElement, ThumbnailVideoProps>(
           ${isScreenSharing ? styles['screen-sharing'] : ''}
         `}
       >
-        <video ref={ref} {...rest} />
+        <video ref={ref} autoPlay playsInline muted {...rest} />
         <div className={styles.nickname}>
           <Image
             src={isScreenSharing ? '/screen-share-white.svg' : '/person-white.svg'}

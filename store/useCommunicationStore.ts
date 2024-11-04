@@ -44,6 +44,10 @@ interface CommunicationState {
   toggleChat: () => void;
 }
 
+interface CustomMediaStream extends MediaStream {
+  streamType?: 'webcam' | 'screen';
+}
+
 const useCommunicationStore = create<CommunicationState>((set, get) => {
   // 피어 연결 상태 인터페이스
   interface PeerConnectionState {
@@ -61,7 +65,15 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     let peerConnectionState = peerConnections[socketId];
     if (peerConnectionState) return peerConnectionState;
 
-    const pc = new RTCPeerConnection();
+    const configuration = {
+      iceServers: [
+        {
+          urls: 'stun:stun.l.google.com:19302',
+        },
+      ],
+    };
+
+    const pc = new RTCPeerConnection(configuration);
 
     // 현재 피어의 polite 여부 결정
     const localSocketId = get().socket?.id;
@@ -89,42 +101,36 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     // 원격 스트림 수신
     pc.ontrack = (event) => {
-      const newStream = event.streams[0];
+      const newStream = event.streams[0] as CustomMediaStream;
+
+      // 트랙 종류에 따라 streamType 결정
+      const streamType =
+        event.track.kind === 'video'
+          ? event.track.label.includes('screen')
+            ? 'screen'
+            : 'webcam'
+          : 'webcam';
+
+      newStream.streamType = streamType;
+
+      console.log('트랙 수신:', {
+        socketId,
+        kind: event.track.kind,
+        label: event.track.label,
+        streamType,
+      });
+
       set((state) => {
         const participantIndex = state.participants.findIndex((p) => p.socketId === socketId);
 
-        if (participantIndex === -1) {
-          // 새로운 참가자 추가
-          return {
-            participants: [
-              ...state.participants,
-              {
-                socketId,
-                userName: '',
-                streams: {
-                  [event.track.kind === 'video' ? 'webcam' : 'screen']: newStream,
-                },
-              },
-            ],
-          };
-        }
-
-        const participant = state.participants[participantIndex];
-        const streams = participant.streams || {};
-
-        const streamType = event.track.kind === 'video' ? 'webcam' : 'screen';
-
-        if (streams[streamType] === newStream) {
-          return {};
-        }
+        if (participantIndex === -1) return state;
 
         const updatedParticipants = [...state.participants];
-        updatedParticipants[participantIndex] = {
-          ...participant,
-          streams: {
-            ...streams,
-            [streamType]: newStream,
-          },
+        const participant = updatedParticipants[participantIndex];
+
+        participant.streams = {
+          ...participant.streams,
+          [streamType]: newStream,
         };
 
         return { participants: updatedParticipants };
@@ -136,10 +142,11 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
       console.log('Signaling state change:', pc.signalingState);
     };
 
-    // 로컬 스트림 추가
-    const localStreams = get().localStreams;
-    Object.values(localStreams).forEach((stream) => {
+    // 새로운 피어에 로컬 트랙 추가
+    const { localStreams } = get();
+    Object.entries(localStreams).forEach(([type, stream]) => {
       if (stream) {
+        console.log(`새 피어에 ${type} 트랙 추가`);
         stream.getTracks().forEach((track: MediaStreamTrack) => {
           pc.addTrack(track, stream);
         });
@@ -165,14 +172,78 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     });
 
     socket.on('room:existingParticipants', async (participants: Participant[]) => {
+      console.log('기존 참가자 목록:', participants);
+
       // 기존 참가자들을 상태에 추가
       set((state) => ({
         participants: [...state.participants, ...participants],
       }));
 
-      // 기존 참가자들과의 연결 설정
+      // 각 참가자와 피어 연결 설정
       for (const participant of participants) {
-        await initiateCall(participant.socketId);
+        const peerState = createPeerConnection(participant.socketId);
+
+        // 현재 활성화된 로컬 스트림이 있다면 공유
+        const { localStreams } = get();
+
+        if (localStreams.webcam) {
+          console.log(`기존 참가자 ${participant.socketId}에게 웹캠 스트림 공유`);
+          localStreams.webcam.getTracks().forEach((track) => {
+            peerState.pc.addTrack(track, localStreams.webcam!);
+          });
+        }
+
+        if (localStreams.screen) {
+          console.log(`기존 참가자 ${participant.socketId}에게 화면공유 스트림 공유`);
+          localStreams.screen.getTracks().forEach((track) => {
+            peerState.pc.addTrack(track, localStreams.screen!);
+          });
+        }
+      }
+    });
+
+    socket.on('room:newParticipant', async (participant: Participant) => {
+      console.log('새로운 참가자 입장:', participant);
+
+      // 참가자 목록에 추가
+      set((state) => ({
+        participants: [...state.participants, participant],
+      }));
+
+      // 새 참가자와 피어 연결 설정
+      const peerState = createPeerConnection(participant.socketId);
+
+      // 현재 활성화된 로컬 스트림이 있다면 새 피어에게 공유
+      const { localStreams, isWebcamSharing, isScreenSharing } = get();
+
+      if (isWebcamSharing && localStreams.webcam) {
+        console.log(`새 참가자 ${participant.socketId}에게 웹캠 스트림 공유`);
+        localStreams.webcam.getTracks().forEach((track) => {
+          peerState.pc.addTrack(track, localStreams.webcam!);
+        });
+      }
+
+      if (isScreenSharing && localStreams.screen) {
+        console.log(`새 참가자 ${participant.socketId}에게 화면공유 스트림 공유`);
+        localStreams.screen.getTracks().forEach((track) => {
+          peerState.pc.addTrack(track, localStreams.screen!);
+        });
+      }
+
+      // 시그널링 협상 시작
+      try {
+        const offer = await peerState.pc.createOffer();
+        await peerState.pc.setLocalDescription(offer);
+
+        const { socket, roomKey } = get();
+        if (!socket || !roomKey) return;
+
+        socket.emit('signal:offer', roomKey, {
+          content: offer,
+          to: participant.socketId,
+        });
+      } catch (err) {
+        console.error('시그널링 협상 중 오류:', err);
       }
     });
 
@@ -338,27 +409,39 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
   // 화면 공유 토글
   const toggleScreenShare = async () => {
-    if (!get().isScreenSharing) {
-      try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true,
-        });
-        set({ isScreenSharing: true });
-        addLocalStream(screenStream, 'screen');
+    const { socket, isScreenSharing } = get();
 
-        // 화면 공유가 종료되면 로컬 스트림에서 제거
-        const [videoTrack] = screenStream.getVideoTracks();
-        videoTrack.onended = () => {
-          if (get().isScreenSharing) {
-            toggleScreenShare();
-          }
-        };
-      } catch (error) {
-        console.error('화면 공유 중 오류 발생:', error);
-      }
+    if (!socket) {
+      console.error('Socket is not initialized');
+      return;
+    }
+
+    if (!isScreenSharing) {
+      const screenStream = (await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      })) as CustomMediaStream;
+      screenStream.streamType = 'screen';
+
+      set((state) => ({
+        localStreams: {
+          ...state.localStreams,
+          screen: screenStream,
+        },
+        isScreenSharing: true,
+      }));
+
+      // 모든 피어 연결에 트랙 추가
+      Object.values(peerConnections).forEach(({ pc }) => {
+        screenStream.getTracks().forEach((track: MediaStreamTrack) => {
+          pc.addTrack(track, screenStream);
+        });
+      });
+
+      // 화면 공유 중지 시 처리
+      screenStream.getVideoTracks()[0].onended = () => {
+        toggleScreenShare();
+      };
     } else {
-      // 화면 공유 중지
       removeLocalStream('screen');
       set({ isScreenSharing: false });
     }
@@ -366,19 +449,54 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
   // 웹캠 공유 토글 (마이크 제외)
   const toggleWebcamShare = async () => {
-    if (!get().isWebcamSharing) {
+    const { isWebcamSharing, socket, roomKey } = get();
+
+    if (!socket || !roomKey) {
+      console.error('Socket is not initialized');
+      return;
+    }
+
+    if (!isWebcamSharing) {
       try {
-        const webcamStream = await navigator.mediaDevices.getUserMedia({
+        const mediaStream = (await navigator.mediaDevices.getUserMedia({
           video: true,
-          audio: false,
+          audio: true,
+        })) as CustomMediaStream;
+        mediaStream.streamType = 'webcam';
+
+        // 상태 업데이트
+        set((state) => ({
+          localStreams: {
+            ...state.localStreams,
+            webcam: mediaStream,
+          },
+          isWebcamSharing: true,
+        }));
+
+        // 모든 피어 연결에 트랙 추가 및 시그널링 시작
+        Object.entries(peerConnections).forEach(async ([socketId, { pc }]) => {
+          console.log('피어에 웹캠 트랙 추가:', socketId);
+          mediaStream.getTracks().forEach((track) => {
+            pc.addTrack(track, mediaStream);
+          });
+
+          // 시그널링 협상 시작
+          try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            socket.emit('signal:offer', roomKey, {
+              content: offer,
+              to: socketId,
+            });
+          } catch (err) {
+            console.error('시그널링 협상 중 오류:', err);
+          }
         });
-        set({ isWebcamSharing: true });
-        addLocalStream(webcamStream, 'webcam');
-      } catch (error) {
-        console.error('웹캠 공유 중 오류 발생:', error);
+      } catch (err) {
+        console.error('웹캠 활성화 중 오류:', err);
       }
     } else {
-      // 웹캠 공유 중지
       removeLocalStream('webcam');
       set({ isWebcamSharing: false });
     }

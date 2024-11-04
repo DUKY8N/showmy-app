@@ -22,11 +22,14 @@ const useVideoStreams = ({
 
   useEffect(() => {
     // 로컬 비디오 스트림 설정
-    if (localStreams.webcam && localVideoRef.current) {
-      localVideoRef.current.srcObject = localStreams.webcam;
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = localStreams.webcam || null;
+      console.log('로컬 웹캠 스트림 설정:', localStreams.webcam);
     }
-    if (localStreams.screen && screenShareVideoRef.current) {
-      screenShareVideoRef.current.srcObject = localStreams.screen;
+
+    if (screenShareVideoRef.current) {
+      screenShareVideoRef.current.srcObject = localStreams.screen || null;
+      console.log('로컬 화면공유 스트림 설정:', localStreams.screen);
     }
 
     // 참가자 비디오 스트림 설정
@@ -34,19 +37,24 @@ const useVideoStreams = ({
       const streams = participant.streams;
       const participantRefs = participantVideoRefs.get(participant.socketId);
 
+      console.log(`참가자 ${participant.socketId} 스트림 설정:`, streams);
+
       if (participantRefs && streams) {
-        // streams가 정의되었는지 확인
-        if (streams.webcam && participantRefs.webcam.current) {
-          participantRefs.webcam.current.srcObject = streams.webcam;
+        if (participantRefs.webcam.current) {
+          participantRefs.webcam.current.srcObject = streams.webcam || null;
+          if (streams.webcam) {
+            participantRefs.webcam.current.play().catch(console.error);
+          }
         }
-        if (streams.screen && participantRefs.screenShare.current) {
-          participantRefs.screenShare.current.srcObject = streams.screen;
+        if (participantRefs.screenShare.current) {
+          participantRefs.screenShare.current.srcObject = streams.screen || null;
+          if (streams.screen) {
+            participantRefs.screenShare.current.play().catch(console.error);
+          }
         }
       }
     });
   }, [participants, localStreams, localVideoRef, screenShareVideoRef, participantVideoRefs]);
-
-  return null;
 };
 
 export default useVideoStreams;
