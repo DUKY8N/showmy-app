@@ -5,7 +5,10 @@ import io, { Socket } from 'socket.io-client';
 interface Participant {
   socketId: string;
   userName: string;
-  streams: MediaStream[];
+  streams: {
+    webcam?: MediaStream;
+    screen?: MediaStream;
+  };
 }
 
 // 시그널링 데이터 인터페이스
@@ -84,34 +87,43 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     // 원격 스트림 수신
     pc.ontrack = (event) => {
+      const newStream = event.streams[0];
       set((state) => {
         const participantIndex = state.participants.findIndex((p) => p.socketId === socketId);
-        const newStream = event.streams[0];
+
+        // 조건에 따라 다른 값을 참조하기 위해 `participant`를 선언합니다.
+        const participant =
+          participantIndex !== -1 ? state.participants[participantIndex] : undefined;
+        const isScreenShare = participant && !!participant.streams.screen;
 
         if (participantIndex === -1) {
-          // 참가자가 없으면 새로 추가
           return {
             participants: [
               ...state.participants,
               {
                 socketId,
-                userName: '', // 필요 시 서버에서 사용자 이름을 받아와 설정
-                streams: [newStream],
+                userName: '',
+                streams: isScreenShare ? { screen: newStream } : { webcam: newStream },
               },
             ],
           };
         }
 
-        const participant = state.participants[participantIndex];
-        const streams = participant.streams || [];
+        const streams = participant!.streams || {};
+        if (
+          (isScreenShare && streams.screen === newStream) ||
+          (!isScreenShare && streams.webcam === newStream)
+        ) {
+          return {};
+        }
 
-        if (streams.includes(newStream)) return {};
-
-        // 기존 참가자의 스트림을 업데이트
         const updatedParticipants = [...state.participants];
         updatedParticipants[participantIndex] = {
-          ...participant,
-          streams: [...streams, newStream],
+          ...participant!,
+          streams: {
+            ...streams,
+            [isScreenShare ? 'screen' : 'webcam']: newStream,
+          },
         };
 
         return { participants: updatedParticipants };
@@ -334,11 +346,10 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     } else {
       // 화면 공유 중지
       const localStreams = get().localStreams;
-      const screenStream = localStreams.find(
-        (stream) =>
-          stream.getVideoTracks()[0]?.label.includes('Screen') ||
-          stream.getVideoTracks()[0]?.label.includes('Entire screen'),
-      );
+      const screenStream = localStreams.find((stream) => {
+        const videoTrackLabel = stream.getVideoTracks()[0]?.label || '';
+        return /Screen|Entire screen|Window/.test(videoTrackLabel);
+      });
       if (screenStream) {
         removeLocalStream(screenStream);
       }

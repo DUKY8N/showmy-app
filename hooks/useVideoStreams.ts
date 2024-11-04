@@ -18,35 +18,33 @@ const useVideoStreams = ({
   screenShareVideoRef,
   participantVideoRefs,
 }: VideoRefs) => {
-  const { localStreams, participants } = useSocketStore();
+  const { participants, localStreams } = useSocketStore();
 
-  // 로컬 비디오 스트림 설정
   useEffect(() => {
-    localStreams.forEach((stream) => {
-      const videoTrackLabel = stream.getVideoTracks()[0]?.label || '';
-      const isScreenShare = /Screen|Entire screen|Window/.test(videoTrackLabel);
+    // 로컬 비디오 설정
+    if (localStreams[0] && localVideoRef.current) {
+      localVideoRef.current.srcObject = localStreams[0];
+    }
+    if (localStreams[1] && screenShareVideoRef.current) {
+      screenShareVideoRef.current.srcObject = localStreams[1];
+    }
 
-      const targetRef = isScreenShare ? screenShareVideoRef : localVideoRef;
-
-      if (targetRef?.current) targetRef.current.srcObject = stream;
-    });
-  }, [localStreams, localVideoRef, screenShareVideoRef]);
-
-  // 참여자 비디오 스트림 설정
-  useEffect(() => {
     participants.forEach((participant) => {
-      const videoRefs = participantVideoRefs.get(participant.socketId);
-      if (!videoRefs) return;
+      const streams = participant.streams;
+      const participantRefs = participantVideoRefs.get(participant.socketId);
 
-      (participant.streams || []).forEach((stream) => {
-        const videoTrackLabel = stream.getVideoTracks()[0]?.label || '';
-        const isScreenShare = /Screen|Entire screen|Window/.test(videoTrackLabel);
-        const targetRef = isScreenShare ? videoRefs.screenShare : videoRefs.webcam;
-
-        if (targetRef?.current) targetRef.current.srcObject = stream;
-      });
+      if (participantRefs) {
+        if (streams?.webcam && participantRefs.webcam.current) {
+          participantRefs.webcam.current.srcObject = streams.webcam;
+        }
+        if (streams?.screen && participantRefs.screenShare.current) {
+          participantRefs.screenShare.current.srcObject = streams.screen;
+        }
+      }
     });
-  }, [participants, participantVideoRefs]);
+  }, [participants, localStreams, localVideoRef, screenShareVideoRef, participantVideoRefs]);
+
+  return null;
 };
 
 export default useVideoStreams;
