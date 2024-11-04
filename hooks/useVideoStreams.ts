@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import useSocketStore from '@/store/useCommunicationStore';
+import useCommunicationStore from '@/store/useCommunicationStore';
 
 interface VideoRefs {
   localVideoRef: React.RefObject<HTMLVideoElement>;
@@ -18,26 +18,28 @@ const useVideoStreams = ({
   screenShareVideoRef,
   participantVideoRefs,
 }: VideoRefs) => {
-  const { participants, localStreams } = useSocketStore();
+  const { participants, localStreams } = useCommunicationStore();
 
   useEffect(() => {
-    // 로컬 비디오 설정
-    if (localStreams[0] && localVideoRef.current) {
-      localVideoRef.current.srcObject = localStreams[0];
+    // 로컬 비디오 스트림 설정
+    if (localStreams.webcam && localVideoRef.current) {
+      localVideoRef.current.srcObject = localStreams.webcam;
     }
-    if (localStreams[1] && screenShareVideoRef.current) {
-      screenShareVideoRef.current.srcObject = localStreams[1];
+    if (localStreams.screen && screenShareVideoRef.current) {
+      screenShareVideoRef.current.srcObject = localStreams.screen;
     }
 
+    // 참가자 비디오 스트림 설정
     participants.forEach((participant) => {
       const streams = participant.streams;
       const participantRefs = participantVideoRefs.get(participant.socketId);
 
-      if (participantRefs) {
-        if (streams?.webcam && participantRefs.webcam.current) {
+      if (participantRefs && streams) {
+        // streams가 정의되었는지 확인
+        if (streams.webcam && participantRefs.webcam.current) {
           participantRefs.webcam.current.srcObject = streams.webcam;
         }
-        if (streams?.screen && participantRefs.screenShare.current) {
+        if (streams.screen && participantRefs.screenShare.current) {
           participantRefs.screenShare.current.srcObject = streams.screen;
         }
       }
