@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import io, { Socket } from 'socket.io-client';
 
 interface Streams {
+  [key: string]: MediaStream | undefined;
   webcam?: MediaStream;
   screen?: MediaStream;
 }
@@ -11,6 +12,7 @@ interface Participant {
   socketId: string;
   userName: string;
   streams: Streams;
+  trackInfo?: { [trackId: string]: string };
 }
 
 // 시그널링 데이터 인터페이스
@@ -101,40 +103,49 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     // 원격 스트림 수신
     pc.ontrack = (event) => {
+      const track = event.track;
       const newStream = event.streams[0] as CustomMediaStream;
 
-      // 트랙 종류에 따라 streamType 결정
-      const streamType =
-        event.track.kind === 'video'
-          ? event.track.label.includes('screen')
-            ? 'screen'
-            : 'webcam'
-          : 'webcam';
+      const participant = get().participants.find((p) => p.socketId === socketId);
+      const mediaType = participant?.trackInfo?.[track.id];
 
-      newStream.streamType = streamType;
-
-      console.log('트랙 수신:', {
-        socketId,
-        kind: event.track.kind,
-        label: event.track.label,
-        streamType,
+      console.log('트랙 수신 상세:', {
+        trackId: track.id,
+        mediaType,
+        participant,
+        streams: event.streams,
+        kind: track.kind,
       });
 
-      set((state) => {
-        const participantIndex = state.participants.findIndex((p) => p.socketId === socketId);
+      if (mediaType) {
+        set((state) => {
+          const participantIndex = state.participants.findIndex((p) => p.socketId === socketId);
+          if (participantIndex === -1) return state;
 
-        if (participantIndex === -1) return state;
+          const updatedParticipants = [...state.participants];
+          const participant = updatedParticipants[participantIndex];
 
-        const updatedParticipants = [...state.participants];
-        const participant = updatedParticipants[participantIndex];
+          // streams 객체가 없으면 초기화
+          if (!participant.streams) {
+            participant.streams = {};
+          }
 
-        participant.streams = {
-          ...participant.streams,
-          [streamType]: newStream,
-        };
+          // 기존 스트림이 있으면 트랙 추가, 없으면 새 스트림 설정
+          if (participant.streams[mediaType]) {
+            participant.streams[mediaType]?.addTrack(track);
+          } else {
+            participant.streams[mediaType] = newStream;
+          }
 
-        return { participants: updatedParticipants };
-      });
+          console.log('스트림 업데이트 후:', {
+            socketId,
+            mediaType,
+            streams: participant.streams,
+          });
+
+          return { participants: updatedParticipants };
+        });
+      }
     };
 
     // 시그널링 상태 변경 이벤트 처리 (디버깅 목적)
@@ -149,6 +160,16 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
         console.log(`새 피어에 ${type} 트랙 추가`);
         stream.getTracks().forEach((track: MediaStreamTrack) => {
           pc.addTrack(track, stream);
+
+          // 트랙 정보 전송
+          const { socket, roomKey } = get();
+          if (socket && roomKey) {
+            socket.emit('signal:trackInfo', roomKey, {
+              to: socketId,
+              trackId: track.id,
+              mediaType: type, // 'webcam' 또는 'screen'
+            });
+          }
         });
       }
     });
@@ -213,7 +234,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
       // 새 참가자와 피어 연결 설정
       const peerState = createPeerConnection(participant.socketId);
 
-      // 현재 활성화된 로컬 스트림이 있다면 새 피어에게 공유
+      // 재 활성화된 로컬 스트림이 있다면 새 피어에게 공유
       const { localStreams, isWebcamSharing, isScreenSharing } = get();
 
       if (isWebcamSharing && localStreams.webcam) {
@@ -279,6 +300,26 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     socket.on('signal:iceCandidateReceived', async (data: SignalData<RTCIceCandidateInit>) => {
       await handleIceCandidate(data);
+    });
+
+    socket.on('signal:trackInfo', (data: SignalData<{ trackId: string; mediaType: string }>) => {
+      const { senderSocketId, content } = data;
+
+      set((state) => {
+        const participantIndex = state.participants.findIndex((p) => p.socketId === senderSocketId);
+        if (participantIndex === -1) return state;
+
+        const updatedParticipants = [...state.participants];
+        const participant = updatedParticipants[participantIndex];
+
+        if (!participant.trackInfo) {
+          participant.trackInfo = {};
+        }
+
+        participant.trackInfo[content.trackId] = content.mediaType;
+
+        return { participants: updatedParticipants };
+      });
     });
   };
 
@@ -375,9 +416,9 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     }));
 
     // 기존 피어 연결에 트랙 추가
-    Object.values(peerConnections).forEach(({ pc }) => {
+    Object.entries(peerConnections).forEach(([targetSocketId, { pc }]) => {
       stream.getTracks().forEach((track: MediaStreamTrack) => {
-        pc.addTrack(track, stream);
+        addTrackWithMetadata(pc, track, stream, type, targetSocketId);
       });
     });
   };
@@ -409,38 +450,51 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
   // 화면 공유 토글
   const toggleScreenShare = async () => {
-    const { socket, isScreenSharing } = get();
+    const { isScreenSharing, socket, roomKey } = get();
 
-    if (!socket) {
+    if (!socket || !roomKey) {
       console.error('Socket is not initialized');
       return;
     }
 
     if (!isScreenSharing) {
-      const screenStream = (await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-      })) as CustomMediaStream;
-      screenStream.streamType = 'screen';
+      try {
+        const screenStream = (await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+        })) as CustomMediaStream;
+        screenStream.streamType = 'screen';
 
-      set((state) => ({
-        localStreams: {
-          ...state.localStreams,
-          screen: screenStream,
-        },
-        isScreenSharing: true,
-      }));
+        set((state) => ({
+          localStreams: {
+            ...state.localStreams,
+            screen: screenStream,
+          },
+          isScreenSharing: true,
+        }));
 
-      // 모든 피어 연결에 트랙 추가
-      Object.values(peerConnections).forEach(({ pc }) => {
-        screenStream.getTracks().forEach((track: MediaStreamTrack) => {
-          pc.addTrack(track, screenStream);
-        });
-      });
+        // 시그널링 순서 보장을 위해 순차적으로 처리
+        for (const [socketId, { pc }] of Object.entries(peerConnections)) {
+          console.log('피어에 화면공유 트랙 추가:', socketId);
 
-      // 화면 공유 중지 시 처리
-      screenStream.getVideoTracks()[0].onended = () => {
-        toggleScreenShare();
-      };
+          screenStream.getTracks().forEach((track) => {
+            addTrackWithMetadata(pc, track, screenStream, 'screen', socketId);
+          });
+
+          try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            socket.emit('signal:offer', roomKey, {
+              content: offer,
+              to: socketId,
+            });
+          } catch (err) {
+            console.error('화면공유 시그널링 중 오류:', err);
+          }
+        }
+      } catch (err) {
+        console.error('화면공유 활성화 중 오류:', err);
+      }
     } else {
       removeLocalStream('screen');
       set({ isScreenSharing: false });
@@ -477,7 +531,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
         Object.entries(peerConnections).forEach(async ([socketId, { pc }]) => {
           console.log('피어에 웹캠 트랙 추가:', socketId);
           mediaStream.getTracks().forEach((track) => {
-            pc.addTrack(track, mediaStream);
+            addTrackWithMetadata(pc, track, mediaStream, 'webcam', socketId);
           });
 
           // 시그널링 협상 시작
@@ -556,6 +610,28 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
   // 채팅창 토글
   const toggleChat = () => {
     set((state) => ({ isChatOpen: !state.isChatOpen }));
+  };
+
+  // 트랙 추가 함수 수정
+  const addTrackWithMetadata = (
+    pc: RTCPeerConnection,
+    track: MediaStreamTrack,
+    stream: MediaStream,
+    type: keyof Streams,
+    targetSocketId: string, // socketId -> targetSocketId로 변경
+  ) => {
+    const sender = pc.addTrack(track, stream);
+
+    const { socket, roomKey } = get();
+    if (socket && roomKey) {
+      socket.emit('signal:trackInfo', roomKey, {
+        to: targetSocketId, // socketId -> targetSocketId 사용
+        trackId: track.id,
+        mediaType: type,
+      });
+    }
+
+    return sender;
   };
 
   return {

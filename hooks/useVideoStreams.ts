@@ -37,19 +37,44 @@ const useVideoStreams = ({
       const streams = participant.streams;
       const participantRefs = participantVideoRefs.get(participant.socketId);
 
-      console.log(`참가자 ${participant.socketId} 스트림 설정:`, streams);
+      console.log('참가자 스트림 설정 상세:', {
+        socketId: participant.socketId,
+        streams,
+        hasWebcamRef: !!participantRefs?.webcam.current,
+        hasScreenShareRef: !!participantRefs?.screenShare.current,
+        webcamStream: streams?.webcam,
+        screenStream: streams?.screen,
+      });
 
       if (participantRefs && streams) {
+        // 웹캠 스트림 설정
         if (participantRefs.webcam.current) {
           participantRefs.webcam.current.srcObject = streams.webcam || null;
           if (streams.webcam) {
             participantRefs.webcam.current.play().catch(console.error);
           }
         }
+
+        // 화면 공유 스트림 설정
         if (participantRefs.screenShare.current) {
-          participantRefs.screenShare.current.srcObject = streams.screen || null;
-          if (streams.screen) {
-            participantRefs.screenShare.current.play().catch(console.error);
+          const screenStream = streams.screen;
+          if (screenStream) {
+            console.log('화면 공유 스트림 설정 시도:', {
+              socketId: participant.socketId,
+              stream: screenStream,
+              tracks: screenStream.getTracks().map((t) => ({
+                id: t.id,
+                kind: t.kind,
+                enabled: t.enabled,
+              })),
+            });
+
+            participantRefs.screenShare.current.srcObject = screenStream;
+            participantRefs.screenShare.current.play().catch((error) => {
+              console.error('화면 공유 재생 실패:', error);
+            });
+          } else {
+            participantRefs.screenShare.current.srcObject = null;
           }
         }
       }
