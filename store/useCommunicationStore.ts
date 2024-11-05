@@ -618,20 +618,23 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     track: MediaStreamTrack,
     stream: MediaStream,
     type: keyof Streams,
-    targetSocketId: string, // socketId -> targetSocketId로 변경
+    targetSocketId: string,
   ) => {
-    const sender = pc.addTrack(track, stream);
+    const transceiver = pc.addTransceiver(track, {
+      streams: [stream],
+      direction: 'sendonly',
+    });
 
     const { socket, roomKey } = get();
     if (socket && roomKey) {
       socket.emit('signal:trackInfo', roomKey, {
-        to: targetSocketId, // socketId -> targetSocketId 사용
+        to: targetSocketId,
         trackId: track.id,
         mediaType: type,
       });
     }
 
-    return sender;
+    return transceiver;
   };
 
   return {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import useCommunicationStore from '@/store/useCommunicationStore';
 
 interface VideoRefs {
@@ -20,66 +20,63 @@ const useVideoStreams = ({
 }: VideoRefs) => {
   const { participants, localStreams } = useCommunicationStore();
 
+  // 스트림이 준비되었는지 확인하는 함수
+  const isStreamReady = (stream: MediaStream | null | undefined): boolean => {
+    if (!stream) return false;
+    const tracks = stream.getTracks();
+    return tracks.length > 0 && tracks.every((track) => track.readyState === 'live');
+  };
+
+  // 비디오 엘리먼트에 스트림 설정하는 함수
+  const setVideoStream = useCallback(
+    async (videoRef: React.RefObject<HTMLVideoElement>, stream: MediaStream | null | undefined) => {
+      if (!videoRef.current) return;
+
+      try {
+        videoRef.current.srcObject = stream || null;
+
+        if (stream && isStreamReady(stream)) {
+          // loadedmetadata 이벤트를 기다림
+          await new Promise((resolve) => {
+            const handleLoadedMetadata = () => {
+              videoRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+              resolve(true);
+            };
+            videoRef.current?.addEventListener('loadedmetadata', handleLoadedMetadata);
+          });
+
+          await videoRef.current.play();
+        }
+      } catch (error) {
+        console.error('비디오 스트림 설정 중 오류:', error);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
-    // 로컬 비디오 스트림 설정
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = localStreams.webcam || null;
-      console.log('로컬 웹캠 스트림 설정:', localStreams.webcam);
-    }
+    // 로컬 스트림 설정
+    setVideoStream(localVideoRef, localStreams.webcam);
+    setVideoStream(screenShareVideoRef, localStreams.screen);
 
-    if (screenShareVideoRef.current) {
-      screenShareVideoRef.current.srcObject = localStreams.screen || null;
-      console.log('로컬 화면공유 스트림 설정:', localStreams.screen);
-    }
-
-    // 참가자 비디오 스트림 설정
+    // 참가자 스트림 설정
     participants.forEach((participant) => {
       const streams = participant.streams;
       const participantRefs = participantVideoRefs.get(participant.socketId);
 
-      console.log('참가자 스트림 설정 상세:', {
-        socketId: participant.socketId,
-        streams,
-        hasWebcamRef: !!participantRefs?.webcam.current,
-        hasScreenShareRef: !!participantRefs?.screenShare.current,
-        webcamStream: streams?.webcam,
-        screenStream: streams?.screen,
-      });
-
       if (participantRefs && streams) {
-        // 웹캠 스트림 설정
-        if (participantRefs.webcam.current) {
-          participantRefs.webcam.current.srcObject = streams.webcam || null;
-          if (streams.webcam) {
-            participantRefs.webcam.current.play().catch(console.error);
-          }
-        }
-
-        // 화면 공유 스트림 설정
-        if (participantRefs.screenShare.current) {
-          const screenStream = streams.screen;
-          if (screenStream) {
-            console.log('화면 공유 스트림 설정 시도:', {
-              socketId: participant.socketId,
-              stream: screenStream,
-              tracks: screenStream.getTracks().map((t) => ({
-                id: t.id,
-                kind: t.kind,
-                enabled: t.enabled,
-              })),
-            });
-
-            participantRefs.screenShare.current.srcObject = screenStream;
-            participantRefs.screenShare.current.play().catch((error) => {
-              console.error('화면 공유 재생 실패:', error);
-            });
-          } else {
-            participantRefs.screenShare.current.srcObject = null;
-          }
-        }
+        setVideoStream(participantRefs.webcam, streams.webcam);
+        setVideoStream(participantRefs.screenShare, streams.screen);
       }
     });
-  }, [participants, localStreams, localVideoRef, screenShareVideoRef, participantVideoRefs]);
+  }, [
+    participants,
+    localStreams,
+    localVideoRef,
+    screenShareVideoRef,
+    participantVideoRefs,
+    setVideoStream,
+  ]);
 };
 
 export default useVideoStreams;
