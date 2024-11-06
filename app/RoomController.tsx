@@ -88,7 +88,7 @@ const ModalController = ({
             placeholder="https://showmy.live/join-room?key="
             ref={keyInputRef}
           />
-          <Input label="닉네임" placeholder="홍길동" ref={nicknameInputRef} />
+          <Input label="닉네임" placeholder="익명" ref={nicknameInputRef} />
         </div>
         <Button onClick={handleJoinRoomClick}>방 참여하기</Button>
       </Modal>

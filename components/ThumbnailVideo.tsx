@@ -5,10 +5,11 @@ import styles from './ThumbnailVideo.module.css';
 type ThumbnailVideoProps = {
   isFocus?: boolean;
   isScreenSharing?: boolean;
+  nickname?: string;
 } & React.ComponentPropsWithRef<'video'>;
 
 const ThumbnailVideo = React.forwardRef<HTMLVideoElement, ThumbnailVideoProps>(
-  ({ isFocus = false, isScreenSharing = false, ...rest }, ref) => {
+  ({ isFocus = false, isScreenSharing = false, nickname = '익명', ...rest }, ref) => {
     return (
       <div
         className={`
@@ -25,7 +26,7 @@ const ThumbnailVideo = React.forwardRef<HTMLVideoElement, ThumbnailVideoProps>(
             width={12}
             height={12}
           />
-          <span>테스트</span>
+          <span>{nickname}</span>
         </div>
       </div>
     );

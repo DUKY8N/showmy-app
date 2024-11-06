@@ -45,9 +45,20 @@ const PageContent = () => {
       <div className={styles['app-container']}>
         <UserThumbnailVideosList>
           <UserThumbnailVideos>
-            <ThumbnailVideo ref={localVideoRef} isFocus={true} autoPlay playsInline /> {/* 웹캠 */}
-            <ThumbnailVideo ref={screenShareVideoRef} isScreenSharing={true} autoPlay playsInline />
-            {/* 화면 공유 */}
+            <ThumbnailVideo
+              ref={localVideoRef}
+              isFocus={true}
+              autoPlay
+              playsInline
+              nickname={`${nickname} (Me)`}
+            />
+            <ThumbnailVideo
+              ref={screenShareVideoRef}
+              isScreenSharing={true}
+              autoPlay
+              playsInline
+              nickname={`${nickname} (Me)`}
+            />
           </UserThumbnailVideos>
           {participants.map((participant) => (
             <UserThumbnailVideos key={participant.socketId}>
@@ -55,12 +66,14 @@ const PageContent = () => {
                 ref={participantVideoRefs.get(participant.socketId)?.webcam}
                 autoPlay
                 playsInline
+                nickname={participant.userName}
               />
               <ThumbnailVideo
                 ref={participantVideoRefs.get(participant.socketId)?.screenShare}
                 isScreenSharing={true}
                 autoPlay
                 playsInline
+                nickname={participant.userName}
               />
             </UserThumbnailVideos>
           ))}
