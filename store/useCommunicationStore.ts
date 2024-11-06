@@ -321,6 +321,27 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
         return { participants: updatedParticipants };
       });
     });
+
+    socket.on('signal:removeTrack', (data: SignalData<{ mediaType: string }>) => {
+      const { senderSocketId, content } = data;
+
+      set((state) => {
+        const participantIndex = state.participants.findIndex((p) => p.socketId === senderSocketId);
+
+        if (participantIndex === -1) return state;
+
+        const updatedParticipants = [...state.participants];
+        const participant = updatedParticipants[participantIndex];
+
+        // 해당 미디어 타입의 스트림 제거
+        if (participant.streams && participant.streams[content.mediaType]) {
+          participant.streams[content.mediaType]?.getTracks().forEach((track) => track.stop());
+          delete participant.streams[content.mediaType];
+        }
+
+        return { participants: updatedParticipants };
+      });
+    });
   };
 
   // 시그널링 처리 함수들
@@ -428,12 +449,41 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     const stream = get().localStreams[type];
     if (stream) {
       // 피어 연결에서 해당 트랙 제거
-      Object.values(peerConnections).forEach(({ pc }) => {
-        pc.getSenders().forEach((sender) => {
-          if (stream.getTracks().includes(sender.track!)) {
-            pc.removeTrack(sender);
+      Object.entries(peerConnections).forEach(async ([socketId, { pc }]) => {
+        const senders = pc.getSenders();
+        const tracksToRemove = senders.filter((sender) =>
+          stream.getTracks().includes(sender.track!),
+        );
+
+        // 트랙 제거 및 시그널링
+        for (const sender of tracksToRemove) {
+          pc.removeTrack(sender);
+
+          // 트랙 제거 시그널링
+          const { socket, roomKey } = get();
+          if (socket && roomKey) {
+            socket.emit('signal:removeTrack', roomKey, {
+              to: socketId,
+              mediaType: type,
+            });
           }
-        });
+        }
+
+        // 새로운 offer 생성 및 전송
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          const { socket, roomKey } = get();
+          if (socket && roomKey) {
+            socket.emit('signal:offer', roomKey, {
+              content: offer,
+              to: socketId,
+            });
+          }
+        } catch (err) {
+          console.error('트랙 제거 후 시그널링 중 오류:', err);
+        }
       });
 
       // 스트림의 트랙 정지
