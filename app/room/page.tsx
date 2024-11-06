@@ -11,7 +11,7 @@ import useSocketStore from '@/store/useCommunicationStore';
 import useVideoStreams from '@/hooks/useVideoStreams';
 
 const PageContent = () => {
-  const { roomKey, socket, participants = [], isChatOpen } = useSocketStore();
+  const { roomKey, socket, participants = [], isChatOpen, localStreams } = useSocketStore();
   const searchParams = useSearchParams();
 
   const key = searchParams.get('key');
@@ -52,13 +52,15 @@ const PageContent = () => {
               playsInline
               nickname={`${nickname} (Me)`}
             />
-            <ThumbnailVideo
-              ref={screenShareVideoRef}
-              isScreenSharing={true}
-              autoPlay
-              playsInline
-              nickname={`${nickname} (Me)`}
-            />
+            {localStreams?.screen && (
+              <ThumbnailVideo
+                ref={screenShareVideoRef}
+                isScreenSharing={true}
+                autoPlay
+                playsInline
+                nickname={`${nickname} (Me)`}
+              />
+            )}
           </UserThumbnailVideos>
           {participants.map((participant) => (
             <UserThumbnailVideos key={participant.socketId}>
@@ -68,13 +70,15 @@ const PageContent = () => {
                 playsInline
                 nickname={participant.userName}
               />
-              <ThumbnailVideo
-                ref={participantVideoRefs.get(participant.socketId)?.screenShare}
-                isScreenSharing={true}
-                autoPlay
-                playsInline
-                nickname={participant.userName}
-              />
+              {participant.streams?.screen && (
+                <ThumbnailVideo
+                  ref={participantVideoRefs.get(participant.socketId)?.screenShare}
+                  isScreenSharing={true}
+                  autoPlay
+                  playsInline
+                  nickname={participant.userName}
+                />
+              )}
             </UserThumbnailVideos>
           ))}
         </UserThumbnailVideosList>
