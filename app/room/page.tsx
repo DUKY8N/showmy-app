@@ -83,7 +83,9 @@ const PageContent = () => {
           ))}
         </UserThumbnailVideosList>
 
-        <div className={styles['focus-video']} />
+        <div className={styles['focus-video-wrapper']}>
+          <video ref={localVideoRef} className={styles['focus-video']} />
+        </div>
 
         <UserControlButtons />
       </div>

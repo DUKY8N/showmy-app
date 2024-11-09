@@ -27,12 +27,21 @@
   align-items: center;
 }
 
-.focus-video {
+.focus-video-wrapper {
   flex-grow: 1;
-  background: gray;
-  border-radius: var(--radius-xs);
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-top: 24px;
   margin-bottom: 32px;
+  min-height: 0;
+}
+.focus-video {
+  width: 100%;
+  max-width: fit-content;
+  height: 100%;
+  max-height: fit-content;
+  border-radius: var(--radius-xs);
 }
 
 .user-control-buttons {
