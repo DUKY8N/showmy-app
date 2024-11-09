@@ -79,7 +79,7 @@ const PageContent = () => {
             <UserThumbnailVideos key={participant.socketId}>
               <ThumbnailVideo
                 ref={participantVideoRefs.get(participant.socketId)?.webcam}
-                isFocus={focusedStream?.stream === participant.streams.webcam}
+                isFocus={focusedStream?.stream === participant.streams?.webcam}
                 autoPlay
                 playsInline
                 nickname={participant.userName}
