@@ -13,13 +13,11 @@
 }
 
 .thumbnail-video video {
-  width: 224px;
   height: 135px;
   background: gray;
   border-radius: var(--radius-xs);
 }
 .thumbnail-video.screen-sharing video {
-  width: 182.52px;
   height: 110px;
 }
 
