@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, Suspense } from 'react';
+import React, { useRef, useMemo, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -13,6 +13,10 @@ import useVideoStreams from '@/hooks/useVideoStreams';
 const PageContent = () => {
   const { roomKey, socket, participants = [], isChatOpen, localStreams } = useSocketStore();
   const searchParams = useSearchParams();
+  const [focusedStream, setFocusedStream] = useState<{
+    stream: MediaStream;
+    nickname: string;
+  } | null>(null);
 
   const key = searchParams.get('key');
   const nickname = searchParams.get('nickname');
@@ -40,6 +44,10 @@ const PageContent = () => {
     participantVideoRefs,
   });
 
+  const handleVideoFocus = (stream: MediaStream, nickname: string) => {
+    setFocusedStream({ stream, nickname });
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles['app-container']}>
@@ -47,18 +55,23 @@ const PageContent = () => {
           <UserThumbnailVideos>
             <ThumbnailVideo
               ref={localVideoRef}
-              isFocus={true}
+              isFocus={focusedStream?.stream === localStreams?.webcam}
               autoPlay
               playsInline
               nickname={`${nickname} (Me)`}
+              onClick={() =>
+                localStreams.webcam && handleVideoFocus(localStreams.webcam, `${nickname} (Me)`)
+              }
             />
             {localStreams?.screen && (
               <ThumbnailVideo
                 ref={screenShareVideoRef}
                 isScreenSharing={true}
+                isFocus={focusedStream?.stream === localStreams.screen}
                 autoPlay
                 playsInline
                 nickname={`${nickname} (Me)`}
+                onClick={() => handleVideoFocus(localStreams.screen!, `${nickname} (Me)`)}
               />
             )}
           </UserThumbnailVideos>
@@ -66,26 +79,33 @@ const PageContent = () => {
             <UserThumbnailVideos key={participant.socketId}>
               <ThumbnailVideo
                 ref={participantVideoRefs.get(participant.socketId)?.webcam}
+                isFocus={focusedStream?.stream === participant.streams.webcam}
                 autoPlay
                 playsInline
                 nickname={participant.userName}
+                onClick={() =>
+                  participant.streams.webcam &&
+                  handleVideoFocus(participant.streams.webcam, participant.userName)
+                }
               />
               {participant.streams?.screen && (
                 <ThumbnailVideo
                   ref={participantVideoRefs.get(participant.socketId)?.screenShare}
                   isScreenSharing={true}
+                  isFocus={focusedStream?.stream === participant.streams.screen}
                   autoPlay
                   playsInline
                   nickname={participant.userName}
+                  onClick={() =>
+                    handleVideoFocus(participant.streams.screen!, participant.userName)
+                  }
                 />
               )}
             </UserThumbnailVideos>
           ))}
         </UserThumbnailVideosList>
 
-        <div className={styles['focus-video-wrapper']}>
-          <video ref={localVideoRef} className={styles['focus-video']} />
-        </div>
+        <FocusVideo focusedStream={focusedStream} />
 
         <UserControlButtons />
       </div>
@@ -137,6 +157,35 @@ type UserThumbnailVideosProps = {
 };
 const UserThumbnailVideos = ({ children }: UserThumbnailVideosProps) => {
   return <div className={styles['user-thumbnail-videos']}>{children}</div>;
+};
+
+type FocusVideoProps = {
+  focusedStream: {
+    stream: MediaStream;
+    nickname: string;
+  } | null;
+};
+
+const FocusVideo = ({ focusedStream }: FocusVideoProps) => {
+  return (
+    <div className={styles['focus-video-wrapper']}>
+      {focusedStream && (
+        <>
+          <video
+            ref={(el) => {
+              if (el) {
+                el.srcObject = focusedStream.stream;
+              }
+            }}
+            className={styles['focus-video']}
+            autoPlay
+            playsInline
+          />
+          <div className={styles['focus-video-nickname']}>{focusedStream.nickname}</div>
+        </>
+      )}
+    </div>
+  );
 };
 
 const UserControlButtons = () => {
