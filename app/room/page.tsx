@@ -48,6 +48,12 @@ const PageContent = () => {
     setFocusedStream({ stream, nickname });
   };
 
+  // FocusVideo 컴포넌트를 메모이제이션
+  const memoizedFocusVideo = useMemo(
+    () => <FocusVideo focusedStream={focusedStream} />,
+    [focusedStream],
+  );
+
   return (
     <div className={styles.page}>
       <div className={styles['app-container']}>
@@ -105,7 +111,7 @@ const PageContent = () => {
           ))}
         </UserThumbnailVideosList>
 
-        <FocusVideo focusedStream={focusedStream} />
+        {memoizedFocusVideo}
 
         <UserControlButtons />
       </div>
@@ -166,7 +172,7 @@ type FocusVideoProps = {
   } | null;
 };
 
-const FocusVideo = ({ focusedStream }: FocusVideoProps) => {
+const FocusVideo = React.memo(({ focusedStream }: FocusVideoProps) => {
   return (
     <div className={styles['focus-video-wrapper']}>
       {focusedStream && (
@@ -186,7 +192,8 @@ const FocusVideo = ({ focusedStream }: FocusVideoProps) => {
       )}
     </div>
   );
-};
+});
+FocusVideo.displayName = 'FocusVideo';
 
 const UserControlButtons = () => {
   const {
