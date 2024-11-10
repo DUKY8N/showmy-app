@@ -21,6 +21,14 @@ interface SignalData<T> {
   content: T;
 }
 
+// 채팅 메시지 타입 추가
+interface ChatMessage {
+  id: string;
+  sender: string;
+  content: string;
+  timestamp: number;
+}
+
 // 상태 인터페이스
 interface CommunicationState {
   // 상태 값
@@ -34,6 +42,10 @@ interface CommunicationState {
   isWebcamSharing: boolean;
   isMicrophoneOn: boolean;
   isChatOpen: boolean;
+
+  // 채팅 관련 상태 추가
+  messages: ChatMessage[];
+  sendMessage: (content: string) => void;
 
   // 비즈니스 로직 메서드
   initialize: () => void;
@@ -281,7 +293,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
         participants: state.participants.filter((p) => p.socketId !== socketId),
       }));
 
-      // 피어 연결 해제
+      // 피 연결 해제
       const peerConnectionState = peerConnections[socketId];
       if (peerConnectionState) {
         peerConnectionState.pc.close();
@@ -341,6 +353,13 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
         return { participants: updatedParticipants };
       });
+    });
+
+    // 채팅 관련 코드 추가
+    socket.on('chat:receive', (message: ChatMessage) => {
+      set((state) => ({
+        messages: [...state.messages, message],
+      }));
     });
   };
 
@@ -687,6 +706,30 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     return transceiver;
   };
 
+  // 메시지 전송 함수 추가
+  const sendMessage = (content: string) => {
+    const { socket, roomKey } = get();
+    const urlParams = new URLSearchParams(window.location.search);
+    const nickname = urlParams.get('nickname');
+
+    if (!socket || !roomKey || !nickname) {
+      console.error('필요한 정보가 없습니다.');
+      return;
+    }
+
+    const message: ChatMessage = {
+      id: `${Date.now()}-${Math.random()}`,
+      sender: nickname,
+      content,
+      timestamp: Date.now(),
+    };
+
+    socket.emit('chat:send', roomKey, message);
+    set((state) => ({
+      messages: [...state.messages, message],
+    }));
+  };
+
   return {
     socket: null,
     roomKey: null,
@@ -696,6 +739,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     isWebcamSharing: false,
     isMicrophoneOn: false,
     isChatOpen: false,
+    messages: [],
 
     // 통신 초기화
     initialize: () => {
@@ -770,6 +814,9 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
     // 채팅창 토글
     toggleChat,
+
+    // 메시지 전송 함수 추가
+    sendMessage,
   };
 });
 

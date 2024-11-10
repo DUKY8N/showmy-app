@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, Suspense, useState } from 'react';
+import React, { useRef, useMemo, Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -11,14 +11,13 @@ import useSocketStore from '@/store/useCommunicationStore';
 import useVideoStreams from '@/hooks/useVideoStreams';
 
 const PageContent = () => {
-  const { roomKey, socket, participants = [], isChatOpen, localStreams } = useSocketStore();
+  const { participants = [], localStreams } = useSocketStore();
   const searchParams = useSearchParams();
   const [focusedStream, setFocusedStream] = useState<{
     stream: MediaStream;
     nickname: string;
   } | null>(null);
 
-  const key = searchParams.get('key');
   const nickname = searchParams.get('nickname');
 
   // 로컬 웹캠 및 화면 공유용 레퍼런스
@@ -116,23 +115,7 @@ const PageContent = () => {
         <UserControlButtons />
       </div>
 
-      <div
-        className={`
-          ${styles['chat-container']}
-          ${isChatOpen ? styles.show : ''}
-        `}
-      >
-        <p>key: {key}</p>
-        <hr />
-        <p>nickname: {nickname}</p>
-        <hr />
-        <p>socket: {String(socket)}</p>
-        <hr />
-        <p>roomKey: {roomKey}</p>
-        <hr />
-        <p>participants: {participants.map((p) => p.userName).join(' ')}</p>
-        <hr />
-      </div>
+      <ChatContainer />
     </div>
   );
 };
@@ -272,6 +255,62 @@ const UserControlButtons = () => {
           onClick={toggleChatHandler}
         />
       </div>
+    </div>
+  );
+};
+
+const ChatContainer = () => {
+  const { messages, sendMessage, isChatOpen } = useSocketStore();
+  const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim()) {
+      sendMessage(newMessage.trim());
+      setNewMessage('');
+    }
+  };
+
+  return (
+    <div
+      className={`
+        ${styles['chat-container']}
+        ${isChatOpen ? styles.show : ''}
+      `}
+    >
+      <div className={styles['chat-messages']}>
+        {messages.map((msg) => (
+          <div key={msg.id} className={styles['chat-message']}>
+            <span className={styles['message-sender']}>{msg.sender}</span>
+            <span className={styles['message-content']}>{msg.content}</span>
+            <span className={styles['message-time']}>
+              {new Date(msg.timestamp).toLocaleTimeString()}
+            </span>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+      <form onSubmit={handleSubmit} className={styles['chat-input-form']}>
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="메시지를 입력하세요..."
+          className={styles['chat-input']}
+        />
+        <button type="submit" className={styles['chat-submit']}>
+          전송
+        </button>
+      </form>
     </div>
   );
 };
