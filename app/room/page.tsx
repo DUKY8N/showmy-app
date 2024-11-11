@@ -24,7 +24,7 @@ const PageContent = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const screenShareVideoRef = useRef<HTMLVideoElement>(null);
 
-  // 각 참가자의 비디오 레퍼런스를 생성
+  // 각 참가자의 비디오 및 오디오 레퍼런스를 생성
   const participantVideoRefs = useMemo(() => {
     const refsMap = new Map();
     participants.forEach((participant) => {
@@ -36,11 +36,20 @@ const PageContent = () => {
     return refsMap;
   }, [participants]);
 
+  const participantAudioRefs = useMemo(() => {
+    const refsMap = new Map();
+    participants.forEach((participant) => {
+      refsMap.set(participant.socketId, React.createRef<HTMLAudioElement>());
+    });
+    return refsMap;
+  }, [participants]);
+
   // useVideoStreams 훅을 통해 로컬 및 참가자 비디오 설정
   useVideoStreams({
     localVideoRef,
     screenShareVideoRef,
     participantVideoRefs,
+    participantAudioRefs,
   });
 
   const handleVideoFocus = (stream: MediaStream, nickname: string) => {
@@ -63,6 +72,7 @@ const PageContent = () => {
               isFocus={focusedStream?.stream === localStreams?.webcam}
               autoPlay
               playsInline
+              muted
               nickname={`${nickname} (Me)`}
               onClick={() =>
                 localStreams.webcam && handleVideoFocus(localStreams.webcam, `${nickname} (Me)`)
@@ -81,32 +91,38 @@ const PageContent = () => {
             )}
           </UserThumbnailVideos>
           {participants.map((participant) => (
-            <UserThumbnailVideos key={participant.socketId}>
-              <ThumbnailVideo
-                ref={participantVideoRefs.get(participant.socketId)?.webcam}
-                isFocus={focusedStream?.stream === participant.streams?.webcam}
-                autoPlay
-                playsInline
-                nickname={participant.userName}
-                onClick={() =>
-                  participant.streams.webcam &&
-                  handleVideoFocus(participant.streams.webcam, participant.userName)
-                }
-              />
-              {participant.streams?.screen && (
+            <div key={participant.socketId}>
+              <UserThumbnailVideos>
                 <ThumbnailVideo
-                  ref={participantVideoRefs.get(participant.socketId)?.screenShare}
-                  isScreenSharing={true}
-                  isFocus={focusedStream?.stream === participant.streams.screen}
+                  ref={participantVideoRefs.get(participant.socketId)?.webcam}
+                  isFocus={focusedStream?.stream === participant.streams?.webcam}
                   autoPlay
                   playsInline
                   nickname={participant.userName}
                   onClick={() =>
-                    handleVideoFocus(participant.streams.screen!, participant.userName)
+                    participant.streams.webcam &&
+                    handleVideoFocus(participant.streams.webcam, participant.userName)
                   }
                 />
+                {participant.streams?.screen && (
+                  <ThumbnailVideo
+                    ref={participantVideoRefs.get(participant.socketId)?.screenShare}
+                    isScreenSharing={true}
+                    isFocus={focusedStream?.stream === participant.streams.screen}
+                    autoPlay
+                    playsInline
+                    nickname={participant.userName}
+                    onClick={() =>
+                      handleVideoFocus(participant.streams.screen!, participant.userName)
+                    }
+                  />
+                )}
+              </UserThumbnailVideos>
+
+              {participant.streams?.microphone && (
+                <audio ref={participantAudioRefs.get(participant.socketId)} autoPlay playsInline />
               )}
-            </UserThumbnailVideos>
+            </div>
           ))}
         </UserThumbnailVideosList>
 

@@ -5,6 +5,7 @@ interface Streams {
   [key: string]: MediaStream | undefined;
   webcam?: MediaStream;
   screen?: MediaStream;
+  microphone?: MediaStream;
 }
 
 // 참가자 인터페이스
@@ -171,17 +172,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
       if (stream) {
         console.log(`새 피어에 ${type} 트랙 추가`);
         stream.getTracks().forEach((track: MediaStreamTrack) => {
-          pc.addTrack(track, stream);
-
-          // 트랙 정보 전송
-          const { socket, roomKey } = get();
-          if (socket && roomKey) {
-            socket.emit('signal:trackInfo', roomKey, {
-              to: socketId,
-              trackId: track.id,
-              mediaType: type, // 'webcam' 또는 'screen'
-            });
-          }
+          addTrackWithMetadata(pc, track, stream, type as keyof Streams, socketId);
         });
       }
     });
@@ -456,10 +447,26 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     }));
 
     // 기존 피어 연결에 트랙 추가
-    Object.entries(peerConnections).forEach(([targetSocketId, { pc }]) => {
+    Object.entries(peerConnections).forEach(async ([targetSocketId, { pc }]) => {
       stream.getTracks().forEach((track: MediaStreamTrack) => {
         addTrackWithMetadata(pc, track, stream, type, targetSocketId);
       });
+
+      // 새로운 오퍼 생성 및 전송
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const { socket, roomKey } = get();
+        if (socket && roomKey) {
+          socket.emit('signal:offer', roomKey, {
+            content: offer,
+            to: targetSocketId,
+          });
+        }
+      } catch (err) {
+        console.error('트랙 추가 후 시그널링 중 오류:', err);
+      }
     });
   };
 
@@ -627,52 +634,27 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
 
   // 마이크 토글
   const toggleMicrophone = async () => {
-    const webcamStream = get().localStreams.webcam;
-    if (!get().isMicrophoneOn) {
+    const { isMicrophoneOn } = get();
+
+    if (!isMicrophoneOn) {
       try {
-        if (webcamStream) {
-          const micStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: false,
-          });
-          micStream.getAudioTracks().forEach((track: MediaStreamTrack) => {
-            webcamStream.addTrack(track);
-            // 피어 연결에 오디오 트랙 추가
-            Object.values(peerConnections).forEach(({ pc }) => {
-              pc.addTrack(track, webcamStream);
-            });
-          });
-        } else {
-          // 웹캠 스트림이 없으면 마이크 전용 스트림 생성
-          const micStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: false,
-          });
-          set({ isWebcamSharing: true });
-          addLocalStream(micStream, 'webcam');
-        }
+        // 마이크 스트림 생성
+        const micStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        });
+
+        // 로컬 스트림에 마이크 스트림 추가
+        addLocalStream(micStream, 'microphone');
+
         set({ isMicrophoneOn: true });
       } catch (error) {
         console.error('마이크 사용 중 오류 발생:', error);
       }
     } else {
-      if (webcamStream) {
-        webcamStream.getAudioTracks().forEach((track: MediaStreamTrack) => {
-          webcamStream.removeTrack(track);
-          track.stop();
-        });
-
-        // 피어 연결에서 해당 트랙 제거
-        Object.values(peerConnections).forEach(({ pc }) => {
-          pc.getSenders().forEach((sender) => {
-            if (sender.track && sender.track.kind === 'audio') {
-              pc.removeTrack(sender);
-            }
-          });
-        });
-
-        set({ isMicrophoneOn: false });
-      }
+      // 마이크 스트림 제거
+      removeLocalStream('microphone');
+      set({ isMicrophoneOn: false });
     }
   };
 

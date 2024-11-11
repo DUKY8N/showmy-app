@@ -234,3 +234,7 @@
     gap: var(--spacing-md);
   }
 }
+
+.page audio {
+  display: none;
+}
