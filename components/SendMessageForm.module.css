@@ -6,6 +6,7 @@
   width: 100%;
   height: fit-content;
   padding: 0 10px;
+  background: white;
   border: 1px solid black;
   border-radius: 999999px;
 }

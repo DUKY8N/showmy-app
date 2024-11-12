@@ -303,10 +303,16 @@ const ChatContainer = () => {
         {messages.map((msg) => (
           <div key={msg.id} className={styles['chat-message']}>
             <span className={styles['message-sender']}>{msg.sender}</span>
-            <span className={styles['message-content']}>{msg.content}</span>
-            <span className={styles['message-time']}>
-              {new Date(msg.timestamp).toLocaleTimeString()}
-            </span>
+            <div className={styles['bottom-container']}>
+              <span className={styles['message-content']}>{msg.content}</span>
+              <span className={styles['message-time']}>
+                {new Date(msg.timestamp).toLocaleTimeString(undefined, {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                })}
+              </span>
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
