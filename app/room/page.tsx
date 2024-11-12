@@ -277,7 +277,7 @@ const UserControlButtons = () => {
 };
 
 const ChatContainer = () => {
-  const { messages, sendMessage, isChatOpen } = useSocketStore();
+  const { messages, sendMessage, isChatOpen, socket } = useSocketStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -288,8 +288,8 @@ const ChatContainer = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = (message: string) => {
-    sendMessage(message);
+  const handleSubmit = (messageContent: string) => {
+    sendMessage(messageContent);
   };
 
   return (
@@ -301,7 +301,13 @@ const ChatContainer = () => {
     >
       <div className={styles['chat-messages']}>
         {messages.map((msg) => (
-          <div key={msg.id} className={styles['chat-message']}>
+          <div
+            key={msg.id}
+            className={`
+              ${styles['chat-message']}
+              ${msg.senderSocketId === socket?.id ? styles['my-message'] : ''}
+            `}
+          >
             <span className={styles['message-sender']}>{msg.sender}</span>
             <div className={styles['bottom-container']}>
               <span className={styles['message-content']}>{msg.content}</span>

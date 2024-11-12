@@ -22,10 +22,11 @@ interface SignalData<T> {
   content: T;
 }
 
-// 채팅 메시지 타입 추가
+// 채팅 메시지 타입 추가 (senderSocketId 추가)
 interface ChatMessage {
   id: string;
   sender: string;
+  senderSocketId: string; // 추가된 부분
   content: string;
   timestamp: number;
 }
@@ -75,7 +76,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
   // 내부 상태: 피어 연결 관리
   const peerConnections: { [socketId: string]: PeerConnectionState } = {};
 
-  // 내부 함수: 피어 연결 생성
+  // 내부 함수: 피어 연결 생���
   const createPeerConnection = (socketId: string): PeerConnectionState => {
     let peerConnectionState = peerConnections[socketId];
     if (peerConnectionState) return peerConnectionState;
@@ -688,13 +689,13 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     return transceiver;
   };
 
-  // 메시지 전송 함수 추가
+  // 메시지 전송 함수 수정
   const sendMessage = (content: string) => {
     const { socket, roomKey } = get();
     const urlParams = new URLSearchParams(window.location.search);
     const nickname = urlParams.get('nickname');
 
-    if (!socket || !roomKey || !nickname) {
+    if (!socket || !socket.id || !roomKey || !nickname) {
       console.error('필요한 정보가 없습니다.');
       return;
     }
@@ -702,6 +703,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     const message: ChatMessage = {
       id: `${Date.now()}-${Math.random()}`,
       sender: nickname,
+      senderSocketId: socket.id, // 추가된 부분
       content,
       timestamp: Date.now(),
     };
@@ -797,7 +799,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
     // 채팅창 토글
     toggleChat,
 
-    // 메시지 전송 함수 추가
+    // 메시지 전송 함수 수정
     sendMessage,
   };
 });
