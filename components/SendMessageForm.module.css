@@ -1,0 +1,38 @@
+.send-message-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: fit-content;
+  padding: 0 10px;
+  border: 1px solid black;
+  border-radius: 999999px;
+}
+
+.send-message-form input {
+  flex-grow: 1;
+  min-height: calc(51px - 2px);
+  padding: 0;
+  margin: 0;
+  border-radius: 4px;
+  border: none;
+  font-size: var(--font-size-md);
+  background: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.send-message-form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  background: var(--semantic-primary-color);
+  border: none;
+  cursor: pointer;
+}

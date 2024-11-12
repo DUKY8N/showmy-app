@@ -9,6 +9,7 @@ import PillButton from '@/components/PillButton';
 import LogoIconButton from '@/components/LogoIconButton';
 import useSocketStore from '@/store/useCommunicationStore';
 import useVideoStreams from '@/hooks/useVideoStreams';
+import SendMessageForm from '@/components/SendMessageForm';
 
 const PageContent = () => {
   const { participants = [], localStreams } = useSocketStore();
@@ -277,7 +278,6 @@ const UserControlButtons = () => {
 
 const ChatContainer = () => {
   const { messages, sendMessage, isChatOpen } = useSocketStore();
-  const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -288,12 +288,8 @@ const ChatContainer = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newMessage.trim()) {
-      sendMessage(newMessage.trim());
-      setNewMessage('');
-    }
+  const handleSubmit = (message: string) => {
+    sendMessage(message);
   };
 
   return (
@@ -315,18 +311,7 @@ const ChatContainer = () => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSubmit} className={styles['chat-input-form']}>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="메시지를 입력하세요..."
-          className={styles['chat-input']}
-        />
-        <button type="submit" className={styles['chat-submit']}>
-          전송
-        </button>
-      </form>
+      <SendMessageForm onSubmit={handleSubmit} className={styles['send-message-form']} />
     </div>
   );
 };

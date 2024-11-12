@@ -68,12 +68,23 @@
 }
 
 .chat-container {
+  position: relative;
   display: none;
-  width: 300px;
+  width: 400px;
   height: 100%;
-  background: gray;
+  padding: var(--spacing-lg);
+  background: white;
   color: black;
 }
 .chat-container.show {
   display: unset;
+}
+
+.chat-container .send-message-form {
+  position: absolute;
+  bottom: 24px;
+  width: auto;
+  left: 0;
+  right: 0;
+  margin: 0 24px;
 }
