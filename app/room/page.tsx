@@ -77,7 +77,7 @@ const PageContent = () => {
           <UserThumbnailVideos>
             <ThumbnailVideo
               ref={localVideoRef}
-              isFocus={focusedStream?.stream === localStreams?.webcam}
+              isFocus={!!focusedStream && focusedStream.stream === localStreams?.webcam}
               autoPlay
               playsInline
               muted
@@ -90,7 +90,7 @@ const PageContent = () => {
               <ThumbnailVideo
                 ref={screenShareVideoRef}
                 isScreenSharing={true}
-                isFocus={focusedStream?.stream === localStreams.screen}
+                isFocus={!!focusedStream && focusedStream.stream === localStreams.screen}
                 autoPlay
                 playsInline
                 nickname={`${nickname} (Me)`}
@@ -103,7 +103,7 @@ const PageContent = () => {
               <UserThumbnailVideos>
                 <ThumbnailVideo
                   ref={participantVideoRefs.get(participant.socketId)?.webcam}
-                  isFocus={focusedStream?.stream === participant.streams?.webcam}
+                  isFocus={!!focusedStream && focusedStream.stream === participant.streams?.webcam}
                   autoPlay
                   playsInline
                   nickname={participant.userName}
@@ -116,7 +116,7 @@ const PageContent = () => {
                   <ThumbnailVideo
                     ref={participantVideoRefs.get(participant.socketId)?.screenShare}
                     isScreenSharing={true}
-                    isFocus={focusedStream?.stream === participant.streams.screen}
+                    isFocus={!!focusedStream && focusedStream.stream === participant.streams.screen}
                     autoPlay
                     playsInline
                     nickname={participant.userName}
