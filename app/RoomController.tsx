@@ -61,7 +61,7 @@ const ModalController = ({
 
   const handleJoinRoomClick = async () => {
     const key = keyInputRef.current?.value || '';
-    const nickname = nicknameInputRef.current?.value || '';
+    const nickname = nicknameInputRef.current?.value || '익명';
 
     try {
       await joinRoom(key, nickname);
@@ -73,7 +73,7 @@ const ModalController = ({
   };
 
   const handleCreateRoomClick = async () => {
-    const nickname = nicknameInputRef.current?.value || '';
+    const nickname = nicknameInputRef.current?.value || '익명';
     const key = await createRoom(nickname);
     router.push(`/room?key=${key}&nickname=${nickname}`);
   };
@@ -100,7 +100,7 @@ const ModalController = ({
       <Modal onClose={closeModal} className={styles.modal}>
         <h1>방 생성</h1>
         <div className={styles['input-container']}>
-          <Input label="닉네임" placeholder="홍길동" ref={nicknameInputRef} />
+          <Input label="닉네임" placeholder="익명" ref={nicknameInputRef} />
         </div>
         <Button onClick={handleCreateRoomClick}>방 생성하기</Button>
       </Modal>
