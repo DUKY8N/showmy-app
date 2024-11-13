@@ -223,7 +223,7 @@ const UserControlButtons = () => {
   };
 
   const copyRoomKeyToClipboard = async () => {
-    await navigator.clipboard.writeText(roomKey ?? '');
+    await navigator.clipboard.writeText(`https://showmy.live/join-room?key=${roomKey}`);
   };
 
   return (

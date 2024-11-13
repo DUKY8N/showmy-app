@@ -605,7 +605,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
         }));
 
         // 모든 피어 연결에 트랙 추가 및 시그널링 시작
-        Object.entries(peerConnections).forEach(async ([socketId, { pc }]) => {
+        for (const [socketId, { pc }] of Object.entries(peerConnections)) {
           console.log('피어에 웹캠 트랙 추가:', socketId);
           mediaStream.getTracks().forEach((track) => {
             addTrackWithMetadata(pc, track, mediaStream, 'webcam', socketId);
@@ -623,7 +623,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
           } catch (err) {
             console.error('시그널링 협상 중 오류:', err);
           }
-        });
+        }
       } catch (err) {
         console.error('웹캠 활성화 중 오류:', err);
       }

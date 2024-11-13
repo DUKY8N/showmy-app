@@ -60,7 +60,7 @@ const ModalController = ({
   }, [initialize]);
 
   const handleJoinRoomClick = async () => {
-    const key = keyInputRef.current?.value || '';
+    const key = extractRoomKey(keyInputRef.current?.value || '');
     const nickname = nicknameInputRef.current?.value || '익명';
 
     try {
@@ -108,6 +108,13 @@ const ModalController = ({
   }
 
   return null;
+};
+
+const extractRoomKey = (input: string): string => {
+  if (input.includes('showmy.live/join-room?key=')) {
+    return input.split('key=')[1];
+  }
+  return input;
 };
 
 export default RoomController;
