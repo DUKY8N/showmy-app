@@ -76,7 +76,7 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
   // 내부 상태: 피어 연결 관리
   const peerConnections: { [socketId: string]: PeerConnectionState } = {};
 
-  // 내부 함수: 피어 연결 생���
+  // 내부 함수: 피어 연결 생성
   const createPeerConnection = (socketId: string): PeerConnectionState => {
     let peerConnectionState = peerConnections[socketId];
     if (peerConnectionState) return peerConnectionState;
@@ -772,18 +772,30 @@ const useCommunicationStore = create<CommunicationState>((set, get) => {
       const socket = get().socket;
       if (roomKey && socket) {
         socket.emit('room:leave', roomKey);
-        set({ roomKey: null, participants: [] });
+        set({
+          roomKey: null,
+          participants: [],
+          messages: [],
+          localStreams: {},
+          isScreenSharing: false,
+          isWebcamSharing: false,
+          isMicrophoneOn: false,
+        });
+
         // 모든 피어 연결 해제
         Object.values(peerConnections).forEach(({ pc }) => pc.close());
+
+        // peerConnections 객체 초기화
+        Object.keys(peerConnections).forEach((key) => {
+          delete peerConnections[key];
+        });
+
         // 로컬 스트림 정리
         Object.values(get().localStreams).forEach((stream) => {
           if (stream) {
             stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
           }
         });
-        set({ localStreams: {} });
-
-        set({ isScreenSharing: false, isWebcamSharing: false, isMicrophoneOn: false });
       }
     },
 
