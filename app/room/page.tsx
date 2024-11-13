@@ -63,6 +63,13 @@ const PageContent = () => {
     [focusedStream],
   );
 
+  useEffect(() => {
+    const audio = new Audio('enter-room.mp3');
+    audio.play().catch((error) => {
+      console.log('오디오 재생 실패:', error);
+    });
+  }, []);
+
   return (
     <div className={styles.page}>
       <div className={styles['app-container']}>
